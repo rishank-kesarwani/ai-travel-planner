@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Production and build outputs
+dist/
+build/
+out/
+.next/
+backend/dist/
+frontend/.next/
+frontend/out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Coverage and test outputs
+coverage/
+.nyc_output/
+*.lcov
+
+# TypeScript compiler cache
+*.tsbuildinfo
+.eslintcache
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

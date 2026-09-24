@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # MongoDB Atlas / Local Replica
+  mongodb:
+    image: mongo:7.0
+    container_name: travel-planner-mongo
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: ai-travel-planner
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Caching and BullMQ Queues
+  redis:
+    image: redis:7.2-alpine
+    container_name: travel-planner-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Travel Planner NestJS Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: travel-planner-backend
+    restart: always
+    ports:
+      - '4000:4000'
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - FRONTEND_URL=http://localhost:3000
+      - JWT_ACCESS_SECRET=docker_prod_access_secret_key_892019
+      - JWT_REFRESH_SECRET=docker_prod_refresh_secret_key_892019
+      - SERVICE_API_KEY=travel_planner_internal_service_key_99182
+      - MONGODB_URI=mongodb://mongodb:27017/ai-travel-planner
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - AI_PLATFORM_URL=http://ai-platform:5000
+      - AI_PLATFORM_API_KEY=platform_master_key_dev_12345
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Travel Planner Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: travel-planner-frontend
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+  redis_data:
