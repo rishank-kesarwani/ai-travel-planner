@@ -34,7 +34,7 @@
 
 ## 🌟 Overview & Highlights
 
-NomadAI is a production-grade full-stack travel planner designed for modern explorers. The frontend communicates exclusively with the **Travel Planner NestJS Backend**, which acts as a secure domain gateway orchestrating database queries, caching, background workers, and calling the independent **Portfolio AI Platform (`portfolio-ai-platform`)**.
+NomadAI is a production-grade full-stack travel planner designed for modern explorers. The frontend communicates exclusively with the **Travel Planner NestJS Backend**, which acts as a secure domain gateway orchestrating database queries, caching, background workers, and calling the independent **AI Platform (`ai-platform`)**.
 
 ```mermaid
 graph TD
@@ -54,7 +54,7 @@ graph TD
     end
 
     subgraph Independent AI Microservice
-        BE <-->|Service API Key / REST| AIPlatform[portfolio-ai-platform]
+        BE <-->|Service API Key / REST| AIPlatform[ai-platform]
         AIPlatform <--> Gemini[Google Gemini 1.5 / 2.0]
         AIPlatform <--> Qdrant[(Qdrant Vector DB / RAG)]
         AIPlatform <--> LangGraph[LangGraph State Machine]
@@ -66,7 +66,7 @@ graph TD
 ### Key Capabilities:
 - 🚀 **Next.js App Router (v14+)**: Server & client components, TanStack Query hydration, React Hook Form with Zod validation.
 - 🛡️ **NestJS Domain Backend**: Layered architecture, global exception filters, logging interceptors, and DTO validation pipes.
-- ⚡ **Zero Direct AI Client Calls**: Eliminates token leakage; all LLM, embedding, and vector DB credentials stay isolated inside `portfolio-ai-platform`.
+- ⚡ **Zero Direct AI Client Calls**: Eliminates token leakage; all LLM, embedding, and vector DB credentials stay isolated inside `ai-platform`.
 - 🔄 **LangGraph Workflow Integration**: Multi-step stateful travel planning with automatic budget validation and re-planning feedback loops.
 - 📚 **Grounded RAG with Citations**: Travel knowledge base and user history ingested asynchronously with strict source provenance (no hallucinations).
 - 🧠 **Dynamic User Personalization & Memory**: Captures structured dietary, pace, and activity constraints directly from chat conversations.
@@ -80,7 +80,7 @@ graph TD
 The system enforces strict boundary isolation:
 1. **Frontend Tier (Next.js)**: Responsible purely for rendering the user interface, client state hydration, and streaming event consumption.
 2. **Domain Service Tier (NestJS)**: Enforces business logic, RBAC, short-lived JWT validation, Redis caching, BullMQ job dispatching, and travel tools execution.
-3. **AI Platform Service (`portfolio-ai-platform`)**: Reusable microservice managing Gemini LLM interaction, LangGraph execution, Qdrant vector retrieval, and user memory stores.
+3. **AI Platform Service (`ai-platform`)**: Reusable microservice managing Gemini LLM interaction, LangGraph execution, Qdrant vector retrieval, and user memory stores.
 
 ```mermaid
 sequenceDiagram
@@ -91,7 +91,7 @@ sequenceDiagram
     participant Redis as Redis Cache
     participant DB as MongoDB
     participant Queue as BullMQ Worker
-    participant AI as portfolio-ai-platform
+    participant AI as ai-platform
 
     User->>FE: Click "Generate AI Itinerary"
     FE->>BE: POST /api/v1/ai/trips/generate
@@ -371,7 +371,7 @@ This boots:
 ## 🛡️ Production Hardening & Failure Handling
 
 1. **Redis Degradation**: The `RedisService` automatically fails over to an in-memory TTL map if Redis goes offline, preventing server crashes.
-2. **AI Platform Standby**: If `portfolio-ai-platform` is unreachable, `AiWorkflowService` and `AiChatService` switch to local deterministic graph planning and contextual synthesis.
+2. **AI Platform Standby**: If `ai-platform` is unreachable, `AiWorkflowService` and `AiChatService` switch to local deterministic graph planning and contextual synthesis.
 3. **Asynchronous RAG Ingestion**: BullMQ ensures slow vector embedding generation never blocks HTTP response cycles.
 4. **Security Hardening**:
    - `Helmet` configured for HTTP headers protection.
