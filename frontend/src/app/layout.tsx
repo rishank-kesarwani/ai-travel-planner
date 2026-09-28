@@ -13,7 +13,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'NomadAI - Autonomous Travel Planner & Intelligence Assistant',
+  title: 'TravelPlanner AI - Autonomous Travel Planner & Intelligence Assistant',
   description:
     'Experience next-generation autonomous travel planning powered by LangGraph workflows, vector RAG citations, and real-time streaming intelligence.',
   icons: {
@@ -28,9 +28,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: 'NomadAI - Autonomous AI Travel Planner',
+    title: 'TravelPlanner AI - Autonomous AI Travel Planner',
     description: 'Next-generation AI travel planning with real-time SSE streaming and RAG memory.',
-    images: [{ url: '/logo.png', width: 1024, height: 1024, alt: 'NomadAI Logo' }],
+    images: [{ url: '/logo.png', width: 1024, height: 1024, alt: 'TravelPlanner AI Logo' }],
   },
 };
 

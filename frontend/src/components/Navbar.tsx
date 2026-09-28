@@ -41,13 +41,13 @@ export function Navbar() {
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/40 transition-all">
               <img
                 src="/logo.png"
-                alt="NomadAI Logo"
+                alt="TravelPlanner AI Logo"
                 className="w-full h-full object-cover rounded-[10px] group-hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-                NomadAI
+                TravelPlanner AI
                 <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
                   v2.0
                 </span>

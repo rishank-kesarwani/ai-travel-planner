@@ -93,7 +93,7 @@ function ResetPasswordContent() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Reset Your Password</h1>
           <p className="text-xs text-slate-400">
-            Choose a new strong password for your NomadAI account.
+            Choose a new strong password for your TravelPlanner AI account.
           </p>
         </div>
 

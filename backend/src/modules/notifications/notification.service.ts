@@ -22,11 +22,11 @@ export class NotificationService {
         pushToken: `push_token_${user.id}`,
       },
       email: {
-        subject: `✈️ Welcome to NomadAI, ${user.name}! Your AI Travel Journey Begins`,
+        subject: `✈️ Welcome to TravelPlanner AI, ${user.name}! Your AI Travel Journey Begins`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #f8fafc; border-radius: 16px; padding: 32px; border: 1px solid #1e293b;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <h1 style="color: #2dd4bf; margin: 0; font-size: 26px;">NomadAI Travel Intelligence</h1>
+              <h1 style="color: #2dd4bf; margin: 0; font-size: 26px;">TravelPlanner AI Intelligence</h1>
               <p style="color: #94a3b8; font-size: 14px; margin-top: 6px;">Next-Gen Autonomous Itinerary Orchestration</p>
             </div>
             <div style="background-color: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -41,12 +41,12 @@ export class NotificationService {
               </a>
             </div>
             <hr style="border: none; border-top: 1px solid #334155; margin: 28px 0 16px;" />
-            <p style="color: #64748b; font-size: 11px; text-align: center;">NomadAI Flagship Portfolio • Powered by Notification Engine Service</p>
+            <p style="color: #64748b; font-size: 11px; text-align: center;">TravelPlanner AI Flagship Portfolio • Powered by Notification Engine Service</p>
           </div>
         `,
       },
       push: {
-        title: `Welcome to NomadAI! 🌍`,
+        title: `Welcome to TravelPlanner AI! 🌍`,
         body: `Hi ${user.name}, your travel assistant is ready. Tap to plan your next journey!`,
       },
       metadata: {
@@ -185,17 +185,17 @@ export class NotificationService {
         email: user.email,
       },
       email: {
-        subject: `🔐 Reset Your NomadAI Password`,
+        subject: `🔐 Reset Your TravelPlanner AI Password`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #f8fafc; border-radius: 16px; padding: 32px; border: 1px solid #1e293b;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <h1 style="color: #2dd4bf; margin: 0; font-size: 24px;">NomadAI Security</h1>
+              <h1 style="color: #2dd4bf; margin: 0; font-size: 24px;">TravelPlanner AI Security</h1>
               <p style="color: #94a3b8; font-size: 14px; margin-top: 6px;">Password Reset Request</p>
             </div>
             <div style="background-color: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
               <h2 style="font-size: 16px; color: #ffffff; margin-top: 0;">Hello ${user.name},</h2>
               <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">
-                We received a request to reset the password for your NomadAI account. Click the button below to choose a new password. This link will expire in 1 hour.
+                We received a request to reset the password for your TravelPlanner AI account. Click the button below to choose a new password. This link will expire in 1 hour.
               </p>
               <div style="text-align: center; margin: 24px 0 12px;">
                 <a href="${user.resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #14b8a6, #06b6d4); color: #020617; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-size: 14px;">
@@ -206,7 +206,7 @@ export class NotificationService {
                 If you did not request a password reset, you can safely ignore this email. Your password will not change.
               </p>
             </div>
-            <p style="color: #64748b; font-size: 11px; text-align: center;">NomadAI Security Service • Protected by Token Hash Verification</p>
+            <p style="color: #64748b; font-size: 11px; text-align: center;">TravelPlanner AI Security Service • Protected by Token Hash Verification</p>
           </div>
         `,
       },

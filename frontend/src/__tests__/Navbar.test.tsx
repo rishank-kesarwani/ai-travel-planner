@@ -17,7 +17,7 @@ describe('Navbar Component', () => {
       </AuthProvider>,
     );
 
-    expect(screen.getByText('NomadAI')).toBeInTheDocument();
+    expect(screen.getByText('TravelPlanner AI')).toBeInTheDocument();
     expect(screen.getByText('Destinations')).toBeInTheDocument();
     expect(screen.getByText('AI Planner')).toBeInTheDocument();
   });

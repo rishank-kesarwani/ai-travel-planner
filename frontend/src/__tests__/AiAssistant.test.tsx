@@ -34,7 +34,7 @@ describe('AiAssistantPage', () => {
 
     expect(screen.getByText('Login Required')).toBeInTheDocument();
     expect(
-      screen.getByText(/Please log in to use the NomadAI Travel Assistant/),
+      screen.getByText(/Please log in to use the TravelPlanner AI Assistant/),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Log In/i })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: /Get Started/i })).toHaveAttribute('href', '/register');
@@ -59,7 +59,7 @@ describe('AiAssistantPage', () => {
 
     render(<AiAssistantPage />);
 
-    expect(screen.getByText(/NomadAI Travel Intelligence/i)).toBeInTheDocument();
+    expect(screen.getByText(/TravelPlanner AI Intelligence/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Ask anything:/i)).toBeInTheDocument();
     expect(screen.queryByText('Login Required')).not.toBeInTheDocument();
   });

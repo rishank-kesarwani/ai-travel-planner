@@ -1,4 +1,4 @@
-# 🌍 NomadAI — Production-Grade AI Travel Planner & Agentic Orchestrator
+# 🌍 TravelPlanner AI — Production-Grade AI Travel Planner & Agentic Orchestrator
 
 [![CI/CD Pipeline](https://github.com/rishank-kesarwani/ai-travel-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/rishank-kesarwani/ai-travel-planner/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
@@ -34,7 +34,7 @@
 
 ## 🌟 Overview & Highlights
 
-NomadAI is a production-grade full-stack travel planner designed for modern explorers. The frontend communicates exclusively with the **Travel Planner NestJS Backend**, which acts as a secure domain gateway orchestrating database queries, caching, background workers, and calling the independent **AI Platform (`ai-platform`)**.
+TravelPlanner AI is a production-grade full-stack travel planner designed for modern explorers. The frontend communicates exclusively with the **Travel Planner NestJS Backend**, which acts as a secure domain gateway orchestrating database queries, caching, background workers, and calling the independent **AI Platform (`ai-platform`)**.
 
 ```mermaid
 graph TD

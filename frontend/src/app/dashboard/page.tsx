@@ -271,7 +271,7 @@ export default function DashboardPage() {
           <div className="glass-panel p-5 rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-950/40 to-slate-900 space-y-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-teal-400" />
-              <h3 className="text-sm font-bold text-white">Ask NomadAI Assistant</h3>
+              <h3 className="text-sm font-bold text-white">Ask TravelPlanner AI Assistant</h3>
             </div>
             <p className="text-xs text-slate-300">
               Need to adjust day 3, budget a trip to Rome, or find vegetarian food spots in Kyoto?

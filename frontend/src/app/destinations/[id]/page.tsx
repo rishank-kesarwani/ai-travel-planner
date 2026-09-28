@@ -286,7 +286,7 @@ export default function DestinationDetailPage() {
           {/* AI Travel Assistant Prompt Card */}
           <div className="glass-panel rounded-3xl p-6 border border-teal-500/30 bg-gradient-to-br from-slate-900 to-teal-950/40 space-y-3">
             <Sparkles className="w-5 h-5 text-teal-400" />
-            <h3 className="text-sm font-bold text-white">Customize with NomadAI</h3>
+            <h3 className="text-sm font-bold text-white">Customize with TravelPlanner AI</h3>
             <p className="text-xs text-slate-300">
               Ask questions about local customs, hidden viewpoints, or vegetarian food in {destination.name}.
             </p>

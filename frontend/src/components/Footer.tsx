@@ -11,9 +11,9 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5">
               <div className="w-8 h-8 rounded-lg overflow-hidden bg-teal-500/20 border border-teal-500/40 flex items-center justify-center">
-                <img src="/logo.png" alt="NomadAI Logo" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="TravelPlanner AI Logo" className="w-full h-full object-cover" />
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">NomadAI</span>
+              <span className="text-lg font-bold text-white tracking-tight">TravelPlanner AI</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
               Flagship AI travel orchestration platform powered by LangGraph workflows, vector RAG citations, and autonomous tool calling.
@@ -96,7 +96,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© 2026 NomadAI Travel Technologies. Production AI Engineering Portfolio.</p>
+          <p>© 2026 TravelPlanner AI Technologies. Production AI Engineering Portfolio.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <span>Next.js App Router</span>
             <span>•</span>

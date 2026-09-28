@@ -49,7 +49,7 @@ function AiAssistantContent() {
     {
       id: 'welcome-msg',
       role: 'assistant',
-      content: `👋 Hello ${user?.name || 'traveler'}! I'm NomadAI, your autonomous travel planner and intelligence assistant.
+      content: `👋 Hello ${user?.name || 'traveler'}! I'm TravelPlanner AI, your autonomous travel planner and intelligence assistant.
 
 I can help you:
 - **Plan customized multi-day itineraries** with cost and weather breakdowns
@@ -316,7 +316,7 @@ What destination or travel style are you exploring today?`,
     return (
       <div className="py-24 text-center space-y-3">
         <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs text-slate-400">Connecting to NomadAI Assistant...</p>
+        <p className="text-xs text-slate-400">Connecting to TravelPlanner AI Assistant...</p>
       </div>
     );
   }
@@ -335,7 +335,7 @@ What destination or travel style are you exploring today?`,
             </div>
             <div>
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                NomadAI Travel Intelligence
+                TravelPlanner AI Intelligence
                 <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 text-[10px] font-mono border border-teal-500/20">
                   SSE Stream • RAG Grounded
                 </span>
@@ -357,7 +357,7 @@ What destination or travel style are you exploring today?`,
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-white tracking-tight">Login Required</h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto">
-                Please log in to use the NomadAI Travel Assistant. Your personalized travel history, preferences, and saved memories will be used to create better recommendations.
+                Please log in to use the TravelPlanner AI Assistant. Your personalized travel history, preferences, and saved memories will be used to create better recommendations.
               </p>
             </div>
 
@@ -396,7 +396,7 @@ What destination or travel style are you exploring today?`,
           </div>
           <div>
             <h1 className="text-lg font-bold text-white flex items-center gap-2">
-              NomadAI Travel Intelligence
+              TravelPlanner AI Intelligence
               <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 text-[10px] font-mono border border-teal-500/20">
                 SSE Stream • RAG Grounded
               </span>
@@ -580,7 +580,7 @@ export default function AiAssistantPage() {
       fallback={
         <div className="py-20 text-center space-y-3">
           <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-400">Connecting to NomadAI Assistant...</p>
+          <p className="text-xs text-slate-400">Connecting to TravelPlanner AI Assistant...</p>
         </div>
       }
     >

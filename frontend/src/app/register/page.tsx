@@ -62,7 +62,7 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Create an Account</h1>
           <p className="text-xs text-slate-400">
-            Join NomadAI to experience intelligent travel orchestration.
+            Join TravelPlanner AI to experience intelligent travel orchestration.
           </p>
         </div>
 
