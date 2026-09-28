@@ -70,6 +70,7 @@ export class NotificationService {
       endDate: string;
       numberOfDays: number;
       budget: number;
+      currency?: string;
       itinerary?: any[];
     },
   ): Promise<void> {
@@ -77,6 +78,8 @@ export class NotificationService {
       .slice(0, 3)
       .map((d: any) => `<li style="margin-bottom: 6px; color: #cbd5e1;"><strong>Day ${d.day}</strong>: ${d.theme}</li>`)
       .join('');
+
+    const tripCurrency = trip.currency || 'INR';
 
     const payload: IngestNotificationPayload = {
       idempotencyKey: `trip_created_${trip._id}`,
@@ -100,7 +103,7 @@ export class NotificationService {
                 ${daysSummary || '<li>Custom AI curated day plans and activities</li>'}
               </ul>
               <div style="margin-top: 14px; font-size: 13px; color: #2dd4bf;">
-                <strong>Estimated Budget:</strong> $${trip.budget} USD
+                <strong>Estimated Budget:</strong> ${tripCurrency} ${trip.budget?.toLocaleString()}
               </div>
             </div>
 
@@ -114,7 +117,7 @@ export class NotificationService {
       },
       push: {
         title: `Trip to ${trip.destination} Saved! 🌴`,
-        body: `${trip.numberOfDays} days planned starting ${trip.startDate}. Budget: $${trip.budget}`,
+        body: `${trip.numberOfDays} days planned starting ${trip.startDate}. Budget: ${tripCurrency} ${trip.budget?.toLocaleString()}`,
       },
       metadata: {
         event: 'TRIP_CREATED',

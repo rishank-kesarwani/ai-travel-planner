@@ -60,6 +60,7 @@ export class TripsService {
           endDate: savedTrip.endDate,
           numberOfDays: savedTrip.numberOfDays,
           budget: savedTrip.budget,
+          currency: savedTrip.currency,
           itinerary: savedTrip.itinerary,
         },
       )

@@ -21,12 +21,14 @@ import {
 } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth-context';
+import { useCurrency } from '../../../lib/currency-context';
 import { Destination, WeatherData, Review, Favorite } from '../../../types';
 
 export default function DestinationDetailPage() {
   const params = useParams();
   const identifier = params?.id as string;
   const { user } = useAuth();
+  const { currency, formatPrice, convertPrice } = useCurrency();
   const queryClient = useQueryClient();
 
   const [rating, setRating] = useState(5);
@@ -173,7 +175,10 @@ export default function DestinationDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass-panel p-4 rounded-2xl border border-slate-800 text-xs space-y-1">
           <span className="text-slate-400">Average Daily Cost</span>
-          <p className="text-lg font-bold text-teal-300">${destination.averageDailyCost} <span className="text-xs font-normal text-slate-400">/ day</span></p>
+          <p className="text-lg font-bold text-teal-300">
+            {formatPrice(convertPrice(destination.averageDailyCost, 'USD'))}{' '}
+            <span className="text-xs font-normal text-slate-400">/ day ({currency})</span>
+          </p>
         </div>
         <div className="glass-panel p-4 rounded-2xl border border-slate-800 text-xs space-y-1">
           <span className="text-slate-400">Popular Season</span>

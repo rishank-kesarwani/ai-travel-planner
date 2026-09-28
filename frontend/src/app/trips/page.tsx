@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Trip } from '../../types';
+import { getCurrency, detectCurrencyFromDestination } from '../../lib/currencies';
 
 export default function TripsPage() {
   const queryClient = useQueryClient();
@@ -146,13 +147,20 @@ export default function TripsPage() {
                   </p>
                 </div>
 
-                <div className="text-xs text-slate-300 font-medium flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-teal-400" />
-                    Budget: ${trip.budget}
-                  </span>
-                  <span>{trip.travelers} Traveler(s)</span>
-                </div>
+                {(() => {
+                  const tripCurr = getCurrency(trip.currency || detectCurrencyFromDestination(trip.destination));
+                  return (
+                    <div className="text-xs text-slate-300 font-medium flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-teal-500/20 text-teal-300 font-bold font-mono text-[10px] flex items-center justify-center">
+                          {tripCurr.symbol}
+                        </span>
+                        Budget: {tripCurr.symbol}{trip.budget?.toLocaleString()} ({tripCurr.code})
+                      </span>
+                      <span>{trip.travelers} Traveler(s)</span>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">

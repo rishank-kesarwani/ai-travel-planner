@@ -17,11 +17,14 @@ import {
   Luggage,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
+import { useCurrency } from '../../lib/currency-context';
+import { getCurrency, detectCurrencyFromDestination } from '../../lib/currencies';
 import { api } from '../../lib/api';
 import { Trip, Destination, Favorite } from '../../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { currency, formatPrice } = useCurrency();
 
   // Fetch Trips
   const { data: tripsData, isLoading: tripsLoading } = useQuery<{ items: Trip[]; total: number }>({
@@ -153,17 +156,24 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <h3 className="text-2xl font-extrabold text-white">{upcomingTrip.destination}</h3>
-                  <p className="text-xs text-slate-400 flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {upcomingTrip.startDate} → {upcomingTrip.endDate} ({upcomingTrip.numberOfDays} Days)
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <DollarSign className="w-3.5 h-3.5" />
-                      ${upcomingTrip.budget} Budget
-                    </span>
-                  </p>
+                  {(() => {
+                    const tripCurr = getCurrency(upcomingTrip.currency || detectCurrencyFromDestination(upcomingTrip.destination));
+                    return (
+                      <p className="text-xs text-slate-400 flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {upcomingTrip.startDate} → {upcomingTrip.endDate} ({upcomingTrip.numberOfDays} Days)
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <span className="w-3.5 h-3.5 rounded-full bg-teal-500/20 text-teal-300 font-bold font-mono text-[10px] flex items-center justify-center">
+                            {tripCurr.symbol}
+                          </span>
+                          {tripCurr.symbol}{upcomingTrip.budget?.toLocaleString()} Budget ({tripCurr.code})
+                        </span>
+                      </p>
+                    );
+                  })()}
                 </div>
 
                 <Link
@@ -255,7 +265,7 @@ export default function DashboardPage() {
                     <h4 className="text-sm font-bold text-white truncate group-hover:text-teal-300 transition-colors">
                       {dest.name}
                     </h4>
-                    <p className="text-[11px] text-slate-400 truncate">{dest.country} • ${dest.averageDailyCost}/day</p>
+                    <p className="text-[11px] text-slate-400 truncate">{dest.country} • {formatPrice(dest.averageDailyCost, dest.currency)}/day</p>
                     <div className="flex items-center gap-2 text-[10px] text-teal-400 font-medium">
                       <span>★ {dest.rating}</span>
                       <span>•</span>

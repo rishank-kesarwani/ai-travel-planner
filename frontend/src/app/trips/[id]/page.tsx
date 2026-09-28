@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { Trip, WeatherData } from '../../../types';
+import { getCurrency, detectCurrencyFromDestination } from '../../../lib/currencies';
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -86,6 +87,7 @@ export default function TripDetailPage() {
   }
 
   const activeDay = trip.itinerary?.[activeDayIndex] || trip.itinerary?.[0];
+  const currInfo = getCurrency(trip.currency || detectCurrencyFromDestination(trip.destination));
 
   return (
     <div className="space-y-8 py-4">
@@ -139,8 +141,10 @@ export default function TripDetailPage() {
               </span>
               <span>•</span>
               <span className="flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4 text-teal-400" />
-                Total Budget: ${trip.budget}
+                <span className="w-4 h-4 rounded-full bg-teal-500/20 text-teal-300 font-bold font-mono text-[11px] flex items-center justify-center">
+                  {currInfo.symbol}
+                </span>
+                Total Budget: {currInfo.symbol}{trip.budget?.toLocaleString()} ({currInfo.code})
               </span>
             </div>
           </div>
@@ -198,7 +202,7 @@ export default function TripDetailPage() {
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-1 text-xs">
             <span className="font-bold text-slate-200">Estimated Cost Allocation</span>
             <p className="text-teal-400 font-extrabold text-sm">
-              ${trip.totalEstimatedCostUsd || trip.budget} <span className="text-[10px] text-slate-400 font-normal">/ ${trip.budget} budget</span>
+              {currInfo.symbol}{trip.totalEstimatedCostUsd || trip.budget} <span className="text-[10px] text-slate-400 font-normal">/ {currInfo.symbol}{trip.budget} budget</span>
             </p>
           </div>
         </div>
@@ -237,7 +241,7 @@ export default function TripDetailPage() {
               </div>
               {activeDay.estimatedDailyCostUsd && (
                 <span className="text-xs font-semibold text-slate-400 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 self-start sm:self-auto">
-                  Est. Daily Cost: ${activeDay.estimatedDailyCostUsd}
+                  Est. Daily Cost: {currInfo.symbol}{activeDay.estimatedDailyCostUsd}
                 </span>
               )}
             </div>
@@ -268,7 +272,7 @@ export default function TripDetailPage() {
                         </span>
                         {activity.estimatedCostUsd !== undefined && (
                           <span className="text-teal-300 font-semibold">
-                            ${activity.estimatedCostUsd}
+                            {currInfo.symbol}{activity.estimatedCostUsd}
                           </span>
                         )}
                       </div>
