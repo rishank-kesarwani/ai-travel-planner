@@ -34,12 +34,12 @@ export function Navbar() {
   const filteredLinks = navLinks.filter((link) => !link.authRequired || Boolean(user));
 
   return (
-    <nav className="sticky top-0 z-50 glass-panel border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
-      <div className="max-w-7xl 3xl:max-w-[1600px] 4k:max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav className="sticky top-0 z-50 glass-panel border-b border-white/10 bg-slate-950/85 backdrop-blur-xl">
+      <div className="max-w-7xl 3xl:max-w-[1600px] 4k:max-w-[2000px] mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 flex-nowrap gap-2 min-w-0">
           {/* Brand Logo */}
-          <Link href="/" className="flex items-center space-x-2.5 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/40 transition-all">
+          <Link href="/" className="flex items-center space-x-2.5 group flex-shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/40 transition-all flex-shrink-0">
               <img
                 src="/logo.png"
                 alt="TravelPlanner AI Logo"
@@ -47,20 +47,20 @@ export function Navbar() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+              <span className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5 whitespace-nowrap">
                 TravelPlanner AI
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                <span className="hidden sm:inline-block text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
                   v2.0
                 </span>
               </span>
-              <span className="text-[11px] text-slate-400 font-medium tracking-wide">
+              <span className="text-[11px] text-slate-400 font-medium tracking-wide hidden xl:inline">
                 Next-Gen Travel Intelligence
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
+          <div className="hidden lg:flex items-center space-x-1 xl:space-x-1.5 flex-nowrap min-w-0">
             {filteredLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -69,15 +69,15 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center space-x-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     isActive
-                      ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30'
+                      ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30 font-semibold'
                       : link.highlight
                       ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/40 hover:bg-teal-500/30'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${link.highlight ? 'text-teal-400 animate-pulse' : ''}`} />
+                  <Icon className={`w-3.5 h-3.5 xl:w-4 xl:h-4 flex-shrink-0 ${link.highlight ? 'text-teal-400 animate-pulse' : ''}`} />
                   <span>{link.name}</span>
                 </Link>
               );
@@ -85,39 +85,39 @@ export function Navbar() {
           </div>
 
           {/* Desktop Auth & Currency Controls */}
-          <div className="hidden md:flex items-center space-x-2.5">
+          <div className="hidden lg:flex items-center space-x-2 xl:space-x-2.5 flex-shrink-0">
             <CurrencySelector />
 
             {user ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 xl:space-x-2">
                 <Link
                   href="/profile"
-                  className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/60 text-slate-200 hover:border-teal-500/40 hover:text-white transition-all text-sm"
+                  className="flex items-center space-x-1.5 xl:space-x-2 px-2.5 xl:px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/60 text-slate-200 hover:border-teal-500/40 hover:text-white transition-all text-xs xl:text-sm"
                 >
-                  <div className="w-6 h-6 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold text-xs">
+                  <div className="w-5 h-5 xl:w-6 xl:h-6 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
                     {user.name?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  <span className="max-w-[120px] truncate">{user.name || 'Account'}</span>
+                  <span className="max-w-[80px] xl:max-w-[120px] truncate">{user.name || 'Account'}</span>
                 </Link>
                 <button
                   onClick={() => logout()}
                   title="Logout"
-                  className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-900/80 transition-colors"
+                  className="p-1.5 xl:p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-900/80 transition-colors flex-shrink-0"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 xl:space-x-2">
                 <Link
                   href="/login"
-                  className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors whitespace-nowrap"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/register"
-                  className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-semibold hover:opacity-95 shadow-md shadow-teal-500/20 transition-all"
+                  className="px-3 py-1.5 rounded-lg text-xs xl:text-sm font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 hover:opacity-95 shadow-md shadow-teal-500/20 transition-all whitespace-nowrap"
                 >
                   Get Started
                 </Link>
@@ -125,12 +125,13 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Controls */}
-          <div className="flex md:hidden items-center space-x-2">
+          {/* Mobile & Tablet Controls */}
+          <div className="flex lg:hidden items-center space-x-2 flex-shrink-0">
             <CurrencySelector compact />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
+              aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -138,9 +139,9 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu dropdown */}
+      {/* Mobile & Tablet Menu dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass-panel border-b border-slate-800 px-4 pt-2 pb-4 space-y-1">
+        <div className="lg:hidden glass-panel border-b border-slate-800 px-4 pt-2 pb-4 space-y-1">
           {filteredLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;

@@ -31,7 +31,7 @@ export function CurrencySelector({ compact = false }: { compact?: boolean }) {
       >
         <span className="text-sm">{currencyInfo.flag}</span>
         <span className="font-mono text-teal-300 font-bold">{currencyInfo.code}</span>
-        <span className="text-slate-400 font-normal">({currencyInfo.symbol})</span>
+        <span className="text-slate-400 font-normal hidden xl:inline">({currencyInfo.symbol})</span>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
