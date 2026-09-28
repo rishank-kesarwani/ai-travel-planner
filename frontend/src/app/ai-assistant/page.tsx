@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   Sparkles,
@@ -11,19 +12,38 @@ import {
   Brain,
   User,
   Compass,
-  AlertCircle,
-  Clock,
-  BookOpen,
   Copy,
   Check,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
+import { refreshAccessToken } from '../../lib/api';
 import { ChatMessage, TripCitation } from '../../types';
+
+function getChatErrorMessage(status: number): string {
+  switch (status) {
+    case 401:
+      return '🔐 Please log in to use the AI Travel Assistant.';
+    case 403:
+      return "You don't have permission to use the AI Travel Assistant.";
+    case 404:
+      return 'The AI Assistant service could not be found. Please try again later.';
+    case 429:
+      return 'Too many requests. Please wait a moment and try again.';
+    case 500:
+      return 'Something went wrong while processing your request. Please try again.';
+    case 502:
+    case 503:
+    case 504:
+      return 'The AI service is temporarily unavailable. Please try again shortly.';
+    default:
+      return 'Something went wrong while processing your request. Please try again.';
+  }
+}
 
 function AiAssistantContent() {
   const searchParams = useSearchParams();
   const initialPrompt = searchParams?.get('prompt');
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -59,45 +79,53 @@ What destination or travel style are you exploring today?`,
   ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, isStreaming]);
 
-  const handleSend = async (textToSend?: string) => {
-    const query = (textToSend || inputPrompt).trim();
-    if (!query || isStreaming) return;
+  // Update welcome greeting when user name becomes available
+  useEffect(() => {
+    if (user?.name) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === 'welcome-msg' && msg.content.includes('Hello traveler!')
+            ? {
+                ...msg,
+                content: msg.content.replace('Hello traveler!', `Hello ${user.name}!`),
+              }
+            : msg,
+        ),
+      );
+    }
+  }, [user?.name]);
 
-    setInputPrompt('');
-    setLastExtractedMemory(null);
+  const executeStreamChat = async (
+    messagesPayload: { role: string; content: string }[],
+    assistantMsgId: string,
+    isRetry = false,
+  ): Promise<void> => {
+    let token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+    // If access token missing, attempt refresh once before giving up
+    if (!token) {
+      token = await refreshAccessToken();
+      if (!token) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? { ...msg, content: '🔐 Please log in to use the AI Travel Assistant.' }
+              : msg,
+          ),
+        );
+        return;
+      }
+    }
 
-    const assistantMsgId = `asst-${Date.now()}`;
-    const newMessages = [...messages, userMessage];
-
-    // Optimistically add assistant placeholder
-    setMessages([
-      ...newMessages,
-      {
-        id: assistantMsgId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-
-    setIsStreaming(true);
-    abortControllerRef.current = new AbortController();
-
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : '';
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
     try {
@@ -108,14 +136,30 @@ What destination or travel style are you exploring today?`,
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+          messages: messagesPayload,
           useRag: true,
         }),
-        signal: abortControllerRef.current.signal,
+        signal: abortControllerRef.current?.signal,
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned status ${response.status}`);
+        // If 401 received and not already retrying, attempt token refresh and retry once
+        if (response.status === 401 && !isRetry) {
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            return await executeStreamChat(messagesPayload, assistantMsgId, true);
+          }
+        }
+
+        const errorMessage = getChatErrorMessage(response.status);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? { ...msg, content: errorMessage }
+              : msg,
+          ),
+        );
+        return;
       }
 
       const reader = response.body?.getReader();
@@ -165,8 +209,8 @@ What destination or travel style are you exploring today?`,
                 } else if (parsed.type === 'memory_saved') {
                   setLastExtractedMemory(parsed.preferences);
                 }
-              } catch (e) {
-                // ignore
+              } catch {
+                // ignore SSE malformed chunk
               }
             }
           }
@@ -188,12 +232,52 @@ What destination or travel style are you exploring today?`,
               ? {
                   ...msg,
                   content:
-                    'I encountered a temporary connection error with the AI Platform service. Please check if the backend is running and retry.',
+                    'Unable to connect to the backend. Please check your connection and try again.',
                 }
               : msg,
           ),
         );
       }
+    }
+  };
+
+  const handleSend = async (textToSend?: string) => {
+    // Authentication guard
+    if (!user) return;
+
+    const query = (textToSend || inputPrompt).trim();
+    if (!query || isStreaming) return;
+
+    setInputPrompt('');
+    setLastExtractedMemory(null);
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const assistantMsgId = `asst-${Date.now()}`;
+    const newMessages = [...messages, userMessage];
+
+    // Optimistically add assistant placeholder
+    setMessages([
+      ...newMessages,
+      {
+        id: assistantMsgId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+
+    setIsStreaming(true);
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const messagesPayload = newMessages.map((m) => ({ role: m.role, content: m.content }));
+      await executeStreamChat(messagesPayload, assistantMsgId);
     } finally {
       setIsStreaming(false);
       abortControllerRef.current = null;
@@ -207,6 +291,7 @@ What destination or travel style are you exploring today?`,
   };
 
   const handleRegenerate = () => {
+    if (!user) return;
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
     if (lastUserMsg) {
       setMessages((prev) => {
@@ -226,6 +311,79 @@ What destination or travel style are you exploring today?`,
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // 1. Loading State while checking auth
+  if (isLoading) {
+    return (
+      <div className="py-24 text-center space-y-3">
+        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-slate-400">Connecting to NomadAI Assistant...</p>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated State (Login Required UX)
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 py-4 flex flex-col h-[85vh]">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-teal-500/20">
+              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-teal-400" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white flex items-center gap-2">
+                NomadAI Travel Intelligence
+                <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 text-[10px] font-mono border border-teal-500/20">
+                  SSE Stream • RAG Grounded
+                </span>
+              </h1>
+              <p className="text-xs text-slate-400">
+                Personalized assistant connected to portfolio-ai-platform vector store.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Login Required Card */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full glass-panel rounded-3xl p-8 sm:p-10 border border-white/10 shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-teal-500/20 border border-teal-500/30 mx-auto flex items-center justify-center shadow-lg shadow-teal-500/10">
+              <ShieldCheck className="w-8 h-8 text-teal-400" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-white tracking-tight">Login Required</h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto">
+                Please log in to use the NomadAI Travel Assistant. Your personalized travel history, preferences, and saved memories will be used to create better recommendations.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <Link
+                href="/login"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-sm hover:opacity-95 shadow-lg shadow-teal-500/20 transition-all flex items-center justify-center gap-2"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Log In</span>
+              </Link>
+              <Link
+                href="/register"
+                className="w-full py-3 px-4 rounded-xl bg-slate-900/90 border border-slate-700/80 text-white font-semibold text-sm hover:border-teal-500/40 hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-teal-400" />
+                <span>Get Started</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Authenticated Chat View
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-4 flex flex-col h-[85vh]">
       {/* Header Bar */}

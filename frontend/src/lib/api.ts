@@ -21,6 +21,35 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Exportable token refresh helper
+export async function refreshAccessToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) return null;
+
+  try {
+    const res = await axios.post(
+      `${API_BASE_URL}/api/v1/auth/refresh`,
+      { refreshToken },
+      { withCredentials: true },
+    );
+
+    const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken;
+    if (newAccessToken && typeof window !== 'undefined') {
+      localStorage.setItem('accessToken', newAccessToken);
+      return newAccessToken;
+    }
+    return null;
+  } catch {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
+    return null;
+  }
+}
+
 // Handle automatic token refresh on 401
 api.interceptors.response.use(
   (response) => {
@@ -40,28 +69,15 @@ api.interceptors.response.use(
       !originalRequest.url?.includes('/auth/refresh')
     ) {
       originalRequest._retry = true;
-      try {
-        const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-        const res = await axios.post(
-          `${API_BASE_URL}/api/v1/auth/refresh`,
-          { refreshToken },
-          { withCredentials: true },
-        );
+      const newAccessToken = await refreshAccessToken();
+      if (newAccessToken) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      }
 
-        const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken;
-        if (newAccessToken && typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', newAccessToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(originalRequest);
-        }
-      } catch (refreshErr) {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            window.location.href = '/login';
-          }
+      if (typeof window !== 'undefined') {
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login';
         }
       }
     }
