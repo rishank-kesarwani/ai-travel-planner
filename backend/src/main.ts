@@ -57,7 +57,7 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('AI Travel Planner API')
     .setDescription(
-      'Production-grade REST and AI Agent Tool API for AI Travel Planner. Seamlessly integrated with portfolio-ai-platform.',
+      'Production-grade REST and AI Agent Tool API for AI Travel Planner. Seamlessly integrated with ai-platform.',
     )
     .setVersion('1.0.0')
     .addBearerAuth()

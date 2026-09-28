@@ -32,7 +32,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs">
               <li className="flex items-center space-x-2 text-slate-400">
                 <Cpu className="w-3.5 h-3.5 text-teal-400" />
-                <span>portfolio-ai-platform</span>
+                <span>ai-platform</span>
               </li>
               <li className="flex items-center space-x-2 text-slate-400">
                 <Sparkles className="w-3.5 h-3.5 text-cyan-400" />

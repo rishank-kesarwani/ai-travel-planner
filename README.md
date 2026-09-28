@@ -209,24 +209,58 @@ Domain tools are strictly owned and validated by the Travel backend. The AI Plat
 
 ## 🔐 Authentication & Security Flow
 
+The application implements a zero-trust, multi-layered authentication and credential security architecture:
+
 ```mermaid
 sequenceDiagram
     autonumber
     actor Client as Frontend Client
     participant Auth as Auth Controller
+    participant Users as Users Service
     participant JWT as JWT Service
+    participant Notif as Notification Service
     participant DB as MongoDB
 
+    Note over Client,DB: 1. Standard Login & JWT Token Rotation
     Client->>Auth: POST /api/v1/auth/login { email, password }
-    Auth->>DB: Verify bcrypt password hash
+    Auth->>DB: Verify bcrypt password hash (Salt rounds: 10)
     Auth->>JWT: Generate Access Token (15m) & Refresh Token (7d)
-    Auth->>DB: Store hashed Refresh Token
+    Auth->>DB: Store hashed Refresh Token (refreshTokenHash)
     Auth-->>Client: Set HttpOnly Cookie (RefreshToken) + Return AccessToken
     Note over Client,Auth: Subsequent requests pass Authorization: Bearer <AccessToken>
     Client->>Auth: POST /api/v1/auth/refresh (Cookie or Body)
     Auth->>DB: Validate Refresh Token Hash match
     Auth-->>Client: Rotate & Return new token pair
+
+    Note over Client,DB: 2. Forgot & Reset Password Flow
+    Client->>Auth: POST /api/v1/auth/forgot-password { email }
+    Auth->>DB: Lookup user & save SHA-256 resetPasswordTokenHash (1h expiry)
+    Auth->>Notif: Dispatch Reset Email with secure one-time URL
+    Auth-->>Client: 200 OK (Generic safe confirmation)
+    Client->>Auth: POST /api/v1/auth/reset-password { token, newPassword }
+    Auth->>DB: Verify unexpired token hash & save new bcrypt passwordHash
+    Auth-->>Client: 200 OK (Password successfully reset)
+
+    Note over Client,DB: 3. In-App Password Change (Logged-In User)
+    Client->>Users: PATCH /api/v1/users/change-password { currentPassword, newPassword }
+    Users->>DB: Verify current password via bcrypt.compare()
+    Users->>DB: Hash new password & clear old refresh token sessions
+    Users-->>Client: 200 OK (Password updated)
 ```
+
+### Security Safeguards & UX Protection:
+1. **Password Hashing**: Passwords are never saved in plain text; they are hashed with `bcryptjs` (salt cost factor 10).
+2. **AI Travel Assistant Auth Guard**:
+   - Unauthenticated visitors on `/ai-assistant` see a branded **"Login Required"** state with **[Log In]** (`/login`) and **[Get Started]** (`/register`) actions.
+   - Client-side function guards prevent empty or unauthenticated chat requests from hitting the network.
+   - Streaming SSE calls (`POST /api/v1/ai/chat/stream`) intercept HTTP 401, automatically invoke `refreshAccessToken()`, and retry the stream once without infinite loops.
+   - Status-specific HTTP error mapping (401, 403, 404, 429, 500, 502/503/504) provides explicit diagnostic messaging.
+3. **Forgot & Reset Password**:
+   - Generates cryptographically strong random tokens (`crypto.randomBytes(32)`).
+   - Stored in MongoDB as SHA-256 hashes with a strict 1-hour expiration timestamp.
+   - Invalidates all previous refresh tokens upon password reset.
+4. **Change Password**:
+   - Available directly in the user [`/profile`](file:///Users/rishankkesharwani/Documents/Personal/ai-travel-planner/frontend/src/app/profile/page.tsx) page with current password verification.
 
 ---
 
@@ -234,7 +268,7 @@ sequenceDiagram
 
 ### Collections:
 1. **`users`**
-   - Fields: `name`, `email` (Unique Index), `passwordHash`, `role`, `preferences` (Sub-document), `refreshTokenHash`.
+   - Fields: `name`, `email` (Unique Index), `passwordHash`, `role`, `preferences` (Sub-document), `refreshTokenHash`, `resetPasswordTokenHash`, `resetPasswordExpires`.
 2. **`trips`**
    - Fields: `userId` (Ref User), `destination`, `startDate`, `endDate`, `numberOfDays`, `budget`, `currency`, `travelers`, `interests`, `preferences`, `itinerary` (DayPlan array), `status`, `totalEstimatedCostUsd`, `citations`.
    - **Indexes**: Compound index `{ userId: 1, createdAt: -1 }`, `{ destination: 1, status: 1 }`.
@@ -260,7 +294,7 @@ sequenceDiagram
 ### BullMQ Queues:
 1. **`trip-indexing`**: Ingests newly saved trip plans into AI Platform RAG vector stores.
 2. **`external-api-sync`**: Synchronizes destination catalogues and seasonal exchange rates.
-3. **`notifications`**: Dispatches traveler reminder events.
+3. **`notifications`**: Dispatches traveler reminder events and welcome/reset emails.
 
 ---
 
@@ -271,8 +305,11 @@ sequenceDiagram
 | `POST` | `/api/v1/auth/register` | Public | Create new account & set refresh cookie |
 | `POST` | `/api/v1/auth/login` | Public | Authenticate user & return JWT tokens |
 | `POST` | `/api/v1/auth/refresh` | Public | Rotate access and refresh tokens |
+| `POST` | `/api/v1/auth/forgot-password` | Public | Send 1-hour secure password reset link |
+| `POST` | `/api/v1/auth/reset-password` | Public | Verify reset token & set new bcrypt password |
 | `POST` | `/api/v1/auth/logout` | User | Invalidate active refresh token |
 | `GET` | `/api/v1/auth/me` | User | Get current authenticated user profile |
+| `PATCH` | `/api/v1/users/change-password` | User | Verify current password and update to new password |
 | `PATCH` | `/api/v1/users/preferences` | User | Update dietary, walking & budget preferences |
 | `GET` | `/api/v1/trips` | User | List user trips with status pagination |
 | `POST` | `/api/v1/trips` | User | Create a trip & trigger async BullMQ indexing |
@@ -351,6 +388,7 @@ npm test
 Tests cover:
 - Navbar brand rendering and authentication conditional routing
 - Home Page hero CTA and architecture component validation
+- AI Assistant page authentication-aware UX (Login Required state vs authenticated chat streaming)
 
 ---
 

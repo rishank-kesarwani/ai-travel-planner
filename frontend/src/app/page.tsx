@@ -233,7 +233,7 @@ export default function HomePage() {
           <span className="text-xs font-bold uppercase tracking-wider text-teal-400">Agentic Orchestration</span>
           <h2 className="text-2xl font-bold text-white">LangGraph Travel Planning Engine</h2>
           <p className="text-xs text-slate-400">
-            Conceptually executed by portfolio-ai-platform with real-time feedback loops.
+            Conceptually executed by ai-platform with real-time feedback loops.
           </p>
         </div>
 

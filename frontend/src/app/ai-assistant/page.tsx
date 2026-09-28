@@ -341,7 +341,7 @@ What destination or travel style are you exploring today?`,
                 </span>
               </h1>
               <p className="text-xs text-slate-400">
-                Personalized assistant connected to portfolio-ai-platform vector store.
+                Personalized assistant connected to ai-platform vector store.
               </p>
             </div>
           </div>
@@ -402,7 +402,7 @@ What destination or travel style are you exploring today?`,
               </span>
             </h1>
             <p className="text-xs text-slate-400">
-              Personalized assistant connected to portfolio-ai-platform vector store.
+              Personalized assistant connected to ai-platform vector store.
             </p>
           </div>
         </div>

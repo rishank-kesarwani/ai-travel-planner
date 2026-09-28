@@ -340,7 +340,7 @@ function PlanTripContent() {
                 LangGraph Planning Pipeline Active
               </h3>
               <p className="text-xs text-teal-400 font-mono">
-                portfolio-ai-platform::travel-itinerary-generator
+                ai-platform::travel-itinerary-generator
               </p>
             </div>
           </div>
