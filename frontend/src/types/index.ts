@@ -49,6 +49,21 @@ export interface Destination {
   isFeatured?: boolean;
 }
 
+export interface TripHotel {
+  name: string;
+  type?: string;
+  estimatedCost?: number;
+  estimatedCostUsd?: number;
+  notes?: string;
+}
+
+export interface TripTransport {
+  mode: string;
+  details?: string;
+  estimatedCost?: number;
+  estimatedCostUsd?: number;
+}
+
 export interface TripActivity {
   time: string;
   title: string;
@@ -65,14 +80,29 @@ export interface DayPlan {
   day: number;
   date?: string;
   theme: string;
+  hotel?: TripHotel;
+  transport?: TripTransport;
   activities: TripActivity[];
   meals?: {
     breakfast?: string;
     lunch?: string;
     dinner?: string;
+    estimatedCost?: number;
+    estimatedCostUsd?: number;
   };
   estimatedDailyCostUsd?: number;
   estimatedDailyCost?: number;
+}
+
+export interface TripBudgetBreakdown {
+  accommodationTotal?: number;
+  transportationTotal?: number;
+  foodTotal?: number;
+  activitiesTotal?: number;
+  accommodationTotalUsd?: number;
+  transportationTotalUsd?: number;
+  foodTotalUsd?: number;
+  activitiesTotalUsd?: number;
 }
 
 export interface TripCitation {
@@ -99,6 +129,7 @@ export interface Trip {
   status: 'planning' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
   totalEstimatedCost?: number;
   totalEstimatedCostUsd?: number;
+  budgetBreakdown?: TripBudgetBreakdown;
   aiGenerated?: boolean;
   citations?: TripCitation[];
   notes?: string;

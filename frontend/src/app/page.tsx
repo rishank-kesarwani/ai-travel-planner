@@ -10,9 +10,6 @@ import {
   Cpu,
   Layers,
   CheckCircle2,
-  Calendar,
-  DollarSign,
-  TrendingUp,
 } from 'lucide-react';
 
 export default function HomePage() {

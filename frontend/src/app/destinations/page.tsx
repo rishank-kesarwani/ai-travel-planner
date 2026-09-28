@@ -5,14 +5,11 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
-  MapPin,
   Heart,
   Sparkles,
-  DollarSign,
   Star,
-  ArrowRight,
-  Filter,
   SlidersHorizontal,
+  MapPin,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';

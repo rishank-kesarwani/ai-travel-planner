@@ -6,19 +6,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
-  DollarSign,
-  MapPin,
   Sparkles,
   Users,
   ShieldCheck,
-  CheckCircle2,
   Clock,
   MessageSquare,
   ArrowLeft,
   CloudSun,
   Trash2,
-  Edit,
-  Tag,
+  Hotel,
+  Car,
+  Utensils,
+  Ticket,
+  Luggage,
 } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { Trip, WeatherData } from '../../../types';
@@ -88,6 +88,48 @@ export default function TripDetailPage() {
 
   const activeDay = trip.itinerary?.[activeDayIndex] || trip.itinerary?.[0];
   const currInfo = getCurrency(trip.currency || detectCurrencyFromDestination(trip.destination));
+
+  // Accurately resolve total estimated costs in trip currency (e.g. INR)
+  const resolvedTotalEstimatedCost =
+    trip.totalEstimatedCost && trip.totalEstimatedCost > 1000
+      ? trip.totalEstimatedCost
+      : (trip.totalEstimatedCostUsd || 0) > 0 && currInfo.code !== 'USD'
+      ? Math.round((trip.totalEstimatedCostUsd || 0) * currInfo.rateFromUsd)
+      : trip.totalEstimatedCost || trip.totalEstimatedCostUsd || trip.budget;
+
+  // Accurately derive full trip budget allocation breakdown (Hotel, Cab, Food, Activities)
+  const hotelTotal =
+    trip.budgetBreakdown?.accommodationTotal ||
+    Math.round(resolvedTotalEstimatedCost * 0.45);
+  const transportTotal =
+    trip.budgetBreakdown?.transportationTotal ||
+    Math.round(resolvedTotalEstimatedCost * 0.15);
+  const foodTotal =
+    trip.budgetBreakdown?.foodTotal ||
+    Math.round(resolvedTotalEstimatedCost * 0.25);
+  const activitiesTotal =
+    trip.budgetBreakdown?.activitiesTotal ||
+    Math.round(resolvedTotalEstimatedCost * 0.15);
+
+  // Active Day calculated costs in trip currency
+  const dayTotalCost =
+    activeDay?.estimatedDailyCost && activeDay.estimatedDailyCost > 500
+      ? activeDay.estimatedDailyCost
+      : (activeDay?.estimatedDailyCostUsd || 0) > 0 && currInfo.code !== 'USD'
+      ? Math.round((activeDay?.estimatedDailyCostUsd || 85) * currInfo.rateFromUsd)
+      : activeDay?.estimatedDailyCost || activeDay?.estimatedDailyCostUsd || Math.round(resolvedTotalEstimatedCost / (trip.numberOfDays || 1));
+
+  const dayHotelCost =
+    activeDay?.hotel?.estimatedCost ||
+    Math.round((activeDay?.hotel?.estimatedCostUsd || 45) * currInfo.rateFromUsd);
+
+  const dayTransportCost =
+    activeDay?.transport?.estimatedCost ||
+    Math.round((activeDay?.transport?.estimatedCostUsd || 15) * currInfo.rateFromUsd);
+
+  const dayMealsCost =
+    activeDay?.meals?.estimatedCost ||
+    Math.round((activeDay?.meals?.estimatedCostUsd || 20) * currInfo.rateFromUsd);
 
   return (
     <div className="space-y-8 py-4">
@@ -171,7 +213,7 @@ export default function TripDetailPage() {
           </div>
         </div>
 
-        {/* Weather & Budget Stat Row */}
+        {/* Weather & Budget Allocation Stat Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800">
           {weather && (
             <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex items-center gap-3.5 text-xs">
@@ -200,10 +242,51 @@ export default function TripDetailPage() {
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-1 text-xs">
-            <span className="font-bold text-slate-200">Estimated Cost Allocation</span>
+            <span className="font-bold text-slate-200">Estimated Total Cost (All Incl.)</span>
             <p className="text-teal-400 font-extrabold text-sm">
-              {currInfo.symbol}{trip.totalEstimatedCostUsd || trip.budget} <span className="text-[10px] text-slate-400 font-normal">/ {currInfo.symbol}{trip.budget} budget</span>
+              {currInfo.symbol}{resolvedTotalEstimatedCost.toLocaleString()} <span className="text-[10px] text-slate-400 font-normal">/ {currInfo.symbol}{trip.budget?.toLocaleString()} budget</span>
             </p>
+          </div>
+        </div>
+
+        {/* Comprehensive Budget Breakdown: Hotel, Transit, Meals, Activities */}
+        <div className="pt-3 border-t border-slate-800/80">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+            <Luggage className="w-3.5 h-3.5 text-teal-400" />
+            <span>Complete Trip Cost Allocation Breakdown ({currInfo.code})</span>
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                <Hotel className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Hotel & Stay (45%)</span>
+              </div>
+              <p className="text-teal-300 font-bold font-mono text-sm">{currInfo.symbol}{hotelTotal.toLocaleString()}</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                <Car className="w-3.5 h-3.5 text-amber-400" />
+                <span>Cab & Transit (15%)</span>
+              </div>
+              <p className="text-teal-300 font-bold font-mono text-sm">{currInfo.symbol}{transportTotal.toLocaleString()}</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                <Utensils className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Food & Dining (25%)</span>
+              </div>
+              <p className="text-teal-300 font-bold font-mono text-sm">{currInfo.symbol}{foodTotal.toLocaleString()}</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                <Ticket className="w-3.5 h-3.5 text-purple-400" />
+                <span>Sights & Entry (15%)</span>
+              </div>
+              <p className="text-teal-300 font-bold font-mono text-sm">{currInfo.symbol}{activitiesTotal.toLocaleString()}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -239,81 +322,151 @@ export default function TripDetailPage() {
                 </span>
                 <h2 className="text-xl font-bold text-white">{activeDay.theme}</h2>
               </div>
-              {activeDay.estimatedDailyCostUsd && (
-                <span className="text-xs font-semibold text-slate-400 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 self-start sm:self-auto">
-                  Est. Daily Cost: {currInfo.symbol}{activeDay.estimatedDailyCostUsd}
-                </span>
-              )}
+              <div className="text-xs font-semibold text-slate-300 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-teal-500/30 flex items-center gap-1.5 self-start sm:self-auto">
+                <span className="text-teal-400 font-bold">Est. Day Total:</span>
+                <span className="font-mono text-teal-300 font-extrabold">{currInfo.symbol}{dayTotalCost.toLocaleString()}</span>
+                <span className="text-[10px] text-slate-400">(incl. Hotel, Cab & Food)</span>
+              </div>
+            </div>
+
+            {/* Daily Accommodations & Transit Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Hotel / Stay Card */}
+              <div className="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-cyan-300 font-bold text-xs">
+                    <Hotel className="w-4 h-4 text-cyan-400" />
+                    <span>Accommodation & Stay</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-cyan-300">
+                    ~{currInfo.symbol}{dayHotelCost.toLocaleString()}/night
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-white">
+                  {activeDay.hotel?.name || `${trip.destination} Panorama Resort & Heritage Spa`}
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  {activeDay.hotel?.notes || `Comfortable boutique resort stay with mountain views and breakfast included.`}
+                </p>
+              </div>
+
+              {/* Transportation / Transit Card */}
+              <div className="p-4 rounded-2xl bg-slate-900/80 border border-amber-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                    <Car className="w-4 h-4 text-amber-400" />
+                    <span>Transportation & Local Transit</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-amber-300">
+                    ~{currInfo.symbol}{dayTransportCost.toLocaleString()}/day
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-white">
+                  {activeDay.transport?.mode || 'Private Cab / Scooter Rental'}
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  {activeDay.transport?.details || 'Dedicated AC cab with hill driver for viewpoints, Mall Road & hotel transfers.'}
+                </p>
+              </div>
             </div>
 
             {/* Activities Timeline */}
-            <div className="space-y-6">
-              {activeDay.activities?.map((activity, idx) => (
-                <div
-                  key={idx}
-                  className="flex gap-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800/90 glass-panel-hover"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/40 text-teal-300 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                      {idx + 1}
-                    </div>
-                    {idx < (activeDay.activities.length - 1) && (
-                      <div className="w-0.5 flex-1 bg-slate-800 my-2" />
-                    )}
-                  </div>
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Sightseeing, Sights & Experiences
+              </h3>
+              <div className="space-y-4">
+                {activeDay.activities?.map((activity, idx) => {
+                  const actCost =
+                    activity.estimatedCost && activity.estimatedCost > 0
+                      ? activity.estimatedCost
+                      : (activity.estimatedCostUsd || 0) > 0
+                      ? Math.round((activity.estimatedCostUsd || 0) * currInfo.rateFromUsd)
+                      : 0;
 
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <h3 className="text-sm font-bold text-white">{activity.title}</h3>
-                      <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-teal-400" />
-                          {activity.time}
-                        </span>
-                        {activity.estimatedCostUsd !== undefined && (
-                          <span className="text-teal-300 font-semibold">
-                            {currInfo.symbol}{activity.estimatedCostUsd}
-                          </span>
+                  return (
+                    <div
+                      key={idx}
+                      className="flex gap-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800/90 glass-panel-hover"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/40 text-teal-300 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {idx + 1}
+                        </div>
+                        {idx < (activeDay.activities.length - 1) && (
+                          <div className="w-0.5 flex-1 bg-slate-800 my-2" />
+                        )}
+                      </div>
+
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <h3 className="text-sm font-bold text-white">{activity.title}</h3>
+                          <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-teal-400" />
+                              {activity.time}
+                            </span>
+                            {actCost > 0 ? (
+                              <span className="text-teal-300 font-semibold">
+                                Entry: {currInfo.symbol}{actCost.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="text-emerald-400 text-[11px] font-semibold">
+                                Free Entry
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {activity.description}
+                        </p>
+
+                        {activity.tips && (
+                          <div className="p-2.5 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300/90">
+                            <span className="font-bold">Insider Tip: </span>
+                            <span>{activity.tips}</span>
+                          </div>
                         )}
                       </div>
                     </div>
-
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {activity.description}
-                    </p>
-
-                    {activity.tips && (
-                      <div className="p-2.5 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300/90">
-                        <span className="font-bold">Insider Tip: </span>
-                        <span>{activity.tips}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Meals Section */}
             {activeDay.meals && (
-              <div className="pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                {activeDay.meals.breakfast && (
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="font-bold text-slate-300">🍳 Breakfast</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5">{activeDay.meals.breakfast}</p>
-                  </div>
-                )}
-                {activeDay.meals.lunch && (
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="font-bold text-slate-300">🍱 Lunch</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5">{activeDay.meals.lunch}</p>
-                  </div>
-                )}
-                {activeDay.meals.dinner && (
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="font-bold text-slate-300">🍷 Dinner</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5">{activeDay.meals.dinner}</p>
-                  </div>
-                )}
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Utensils className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Curated Food & Dining Experience</span>
+                  </h4>
+                  <span className="text-xs font-mono font-bold text-emerald-300">
+                    Est. Food: ~{currInfo.symbol}{dayMealsCost.toLocaleString()}/day
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  {activeDay.meals.breakfast && (
+                    <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+                      <span className="font-bold text-slate-200">🍳 Breakfast</span>
+                      <p className="text-slate-400 text-[11px] leading-relaxed">{activeDay.meals.breakfast}</p>
+                    </div>
+                  )}
+                  {activeDay.meals.lunch && (
+                    <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+                      <span className="font-bold text-slate-200">🍱 Lunch</span>
+                      <p className="text-slate-400 text-[11px] leading-relaxed">{activeDay.meals.lunch}</p>
+                    </div>
+                  )}
+                  {activeDay.meals.dinner && (
+                    <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+                      <span className="font-bold text-slate-200">🍷 Dinner</span>
+                      <p className="text-slate-400 text-[11px] leading-relaxed">{activeDay.meals.dinner}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

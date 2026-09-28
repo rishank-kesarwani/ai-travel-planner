@@ -12,6 +12,7 @@ import { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { UserRole } from '../../common/enums/roles.enum';
 import { QueueProducerService } from '../queues/queue-producer.service';
 import { NotificationService } from '../notifications/notification.service';
+import { convertFromUsd, getCurrencyInfo } from '../../common/constants/currencies.constant';
 
 @Injectable()
 export class TripsService {
@@ -24,12 +25,16 @@ export class TripsService {
   ) {}
 
   async create(user: AuthUser, createDto: CreateTripDto): Promise<TripDocument> {
-    const totalCost = this.calculateTotalCost(createDto.itinerary);
+    const currency = createDto.currency || 'INR';
+    const { totalTarget, totalUsd, breakdown } = this.calculateTotalCostAndBreakdown(createDto.itinerary, currency);
 
     const trip = new this.tripModel({
       ...createDto,
+      currency,
       userId: new Types.ObjectId(user.userId),
-      totalEstimatedCostUsd: totalCost,
+      totalEstimatedCost: createDto.totalEstimatedCost || totalTarget,
+      totalEstimatedCostUsd: createDto.totalEstimatedCostUsd || totalUsd,
+      budgetBreakdown: createDto.budgetBreakdown || breakdown,
     });
 
     const savedTrip = await trip.save();
@@ -115,7 +120,13 @@ export class TripsService {
     const trip = await this.findById(user, id);
 
     if (updateDto.itinerary) {
-      (updateDto as any).totalEstimatedCostUsd = this.calculateTotalCost(updateDto.itinerary);
+      const { totalTarget, totalUsd, breakdown } = this.calculateTotalCostAndBreakdown(
+        updateDto.itinerary,
+        trip.currency || 'INR',
+      );
+      (updateDto as any).totalEstimatedCost = totalTarget;
+      (updateDto as any).totalEstimatedCostUsd = totalUsd;
+      (updateDto as any).budgetBreakdown = breakdown;
     }
 
     const updated = await this.tripModel
@@ -176,17 +187,56 @@ export class TripsService {
     };
   }
 
-  private calculateTotalCost(itinerary?: any[]): number {
-    if (!itinerary || !Array.isArray(itinerary)) return 0;
-    return itinerary.reduce((acc, day) => {
-      if (day.estimatedDailyCostUsd) {
-        return acc + day.estimatedDailyCostUsd;
+  private calculateTotalCostAndBreakdown(itinerary?: any[], currency = 'INR') {
+    if (!itinerary || !Array.isArray(itinerary)) {
+      return { totalTarget: 0, totalUsd: 0, breakdown: null };
+    }
+
+    let hotelTotal = 0;
+    let transportTotal = 0;
+    let mealsTotal = 0;
+    let activitiesTotal = 0;
+
+    let hotelTotalUsd = 0;
+    let transportTotalUsd = 0;
+    let mealsTotalUsd = 0;
+    let activitiesTotalUsd = 0;
+
+    for (const day of itinerary) {
+      if (day.hotel) {
+        hotelTotal += day.hotel.estimatedCost || convertFromUsd(day.hotel.estimatedCostUsd || 45, currency);
+        hotelTotalUsd += day.hotel.estimatedCostUsd || 45;
       }
-      const actCost = (day.activities || []).reduce(
-        (sum: number, act: any) => sum + (act.estimatedCostUsd || 0),
-        0,
-      );
-      return acc + actCost;
-    }, 0);
+      if (day.transport) {
+        transportTotal += day.transport.estimatedCost || convertFromUsd(day.transport.estimatedCostUsd || 15, currency);
+        transportTotalUsd += day.transport.estimatedCostUsd || 15;
+      }
+      if (day.meals) {
+        mealsTotal += day.meals.estimatedCost || convertFromUsd(day.meals.estimatedCostUsd || 20, currency);
+        mealsTotalUsd += day.meals.estimatedCostUsd || 20;
+      }
+      for (const act of day.activities || []) {
+        activitiesTotal += act.estimatedCost || convertFromUsd(act.estimatedCostUsd || 10, currency);
+        activitiesTotalUsd += act.estimatedCostUsd || 10;
+      }
+    }
+
+    const totalTarget = hotelTotal + transportTotal + mealsTotal + activitiesTotal;
+    const totalUsd = hotelTotalUsd + transportTotalUsd + mealsTotalUsd + activitiesTotalUsd;
+
+    return {
+      totalTarget,
+      totalUsd,
+      breakdown: {
+        accommodationTotal: hotelTotal,
+        transportationTotal: transportTotal,
+        foodTotal: mealsTotal,
+        activitiesTotal: activitiesTotal,
+        accommodationTotalUsd: hotelTotalUsd,
+        transportationTotalUsd: transportTotalUsd,
+        foodTotalUsd: mealsTotalUsd,
+        activitiesTotalUsd: activitiesTotalUsd,
+      },
+    };
   }
 }

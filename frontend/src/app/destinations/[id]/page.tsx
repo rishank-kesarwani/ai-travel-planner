@@ -7,7 +7,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   MapPin,
   Sparkles,
-  DollarSign,
   Star,
   Calendar,
   CloudSun,

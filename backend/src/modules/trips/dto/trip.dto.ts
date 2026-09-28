@@ -41,6 +41,11 @@ export class TripActivityDto {
   @ApiPropertyOptional({ example: 0 })
   @IsOptional()
   @IsNumber()
+  estimatedCost?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsOptional()
+  @IsNumber()
   estimatedCostUsd?: number;
 
   @ApiPropertyOptional({ example: 'cultural' })
@@ -48,7 +53,7 @@ export class TripActivityDto {
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ example: 'Arrive early to avoid crowds' })
+  @ApiPropertyOptional({ example: 'Arrive early to beat peak morning crowds' })
   @IsOptional()
   @IsString()
   tips?: string;
@@ -70,6 +75,27 @@ export class DayPlanDto {
   @IsNotEmpty()
   theme: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  hotel?: {
+    name: string;
+    type?: string;
+    estimatedCost?: number;
+    estimatedCostUsd?: number;
+    notes?: string;
+  };
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  transport?: {
+    mode: string;
+    details?: string;
+    estimatedCost?: number;
+    estimatedCostUsd?: number;
+  };
+
   @ApiProperty({ type: [TripActivityDto] })
   @IsArray()
   activities: TripActivityDto[];
@@ -81,9 +107,16 @@ export class DayPlanDto {
     breakfast?: string;
     lunch?: string;
     dinner?: string;
+    estimatedCost?: number;
+    estimatedCostUsd?: number;
   };
 
-  @ApiPropertyOptional({ example: 120 })
+  @ApiPropertyOptional({ example: 7000 })
+  @IsOptional()
+  @IsNumber()
+  estimatedDailyCost?: number;
+
+  @ApiPropertyOptional({ example: 85 })
   @IsOptional()
   @IsNumber()
   estimatedDailyCostUsd?: number;
@@ -162,10 +195,20 @@ export class CreateTripDto {
   @IsArray()
   citations?: Array<{ title: string; source: string; snippet?: string }>;
 
+  @ApiPropertyOptional({ example: 49500 })
+  @IsOptional()
+  @IsNumber()
+  totalEstimatedCost?: number;
+
+  @ApiPropertyOptional({ example: 595 })
+  @IsOptional()
+  @IsNumber()
+  totalEstimatedCostUsd?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsObject()
+  budgetBreakdown?: Record<string, any>;
 
   @ApiPropertyOptional()
   @IsOptional()

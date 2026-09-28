@@ -21,6 +21,9 @@ export class TripActivity {
   durationHours?: number;
 
   @Prop({ default: 0 })
+  estimatedCost?: number;
+
+  @Prop({ default: 0 })
   estimatedCostUsd?: number;
 
   @Prop({ default: 'sightseeing' })
@@ -33,6 +36,43 @@ export class TripActivity {
 export const TripActivitySchema = SchemaFactory.createForClass(TripActivity);
 
 @Schema({ _id: false })
+export class TripHotel {
+  @Prop({ default: 'Boutique Hotel / Mountain Resort' })
+  name: string;
+
+  @Prop({ default: 'hotel' })
+  type: string;
+
+  @Prop({ default: 0 })
+  estimatedCost?: number;
+
+  @Prop({ default: 0 })
+  estimatedCostUsd?: number;
+
+  @Prop()
+  notes?: string;
+}
+
+export const TripHotelSchema = SchemaFactory.createForClass(TripHotel);
+
+@Schema({ _id: false })
+export class TripTransport {
+  @Prop({ default: 'Private Cab & Local Transit' })
+  mode: string;
+
+  @Prop({ default: 'Dedicated vehicle for hill transfers and sightseeing' })
+  details: string;
+
+  @Prop({ default: 0 })
+  estimatedCost?: number;
+
+  @Prop({ default: 0 })
+  estimatedCostUsd?: number;
+}
+
+export const TripTransportSchema = SchemaFactory.createForClass(TripTransport);
+
+@Schema({ _id: false })
 export class TripMeals {
   @Prop()
   breakfast?: string;
@@ -42,6 +82,12 @@ export class TripMeals {
 
   @Prop()
   dinner?: string;
+
+  @Prop({ default: 0 })
+  estimatedCost?: number;
+
+  @Prop({ default: 0 })
+  estimatedCostUsd?: number;
 }
 
 export const TripMealsSchema = SchemaFactory.createForClass(TripMeals);
@@ -57,6 +103,12 @@ export class DayPlan {
   @Prop({ required: true })
   theme: string;
 
+  @Prop({ type: TripHotelSchema })
+  hotel?: TripHotel;
+
+  @Prop({ type: TripTransportSchema })
+  transport?: TripTransport;
+
   @Prop({ type: [TripActivitySchema], default: [] })
   activities: TripActivity[];
 
@@ -64,10 +116,42 @@ export class DayPlan {
   meals?: TripMeals;
 
   @Prop({ default: 0 })
+  estimatedDailyCost?: number;
+
+  @Prop({ default: 0 })
   estimatedDailyCostUsd?: number;
 }
 
 export const DayPlanSchema = SchemaFactory.createForClass(DayPlan);
+
+@Schema({ _id: false })
+export class TripBudgetBreakdown {
+  @Prop({ default: 0 })
+  accommodationTotal?: number;
+
+  @Prop({ default: 0 })
+  transportationTotal?: number;
+
+  @Prop({ default: 0 })
+  foodTotal?: number;
+
+  @Prop({ default: 0 })
+  activitiesTotal?: number;
+
+  @Prop({ default: 0 })
+  accommodationTotalUsd?: number;
+
+  @Prop({ default: 0 })
+  transportationTotalUsd?: number;
+
+  @Prop({ default: 0 })
+  foodTotalUsd?: number;
+
+  @Prop({ default: 0 })
+  activitiesTotalUsd?: number;
+}
+
+export const TripBudgetBreakdownSchema = SchemaFactory.createForClass(TripBudgetBreakdown);
 
 @Schema({ _id: false })
 export class TripCitation {
@@ -106,7 +190,7 @@ export class Trip {
   @Prop({ required: true, min: 0 })
   budget: number;
 
-  @Prop({ default: 'USD' })
+  @Prop({ default: 'INR' })
   currency: string;
 
   @Prop({ default: 1, min: 1 })
@@ -130,7 +214,13 @@ export class Trip {
   status: string;
 
   @Prop({ default: 0 })
+  totalEstimatedCost?: number;
+
+  @Prop({ default: 0 })
   totalEstimatedCostUsd?: number;
+
+  @Prop({ type: TripBudgetBreakdownSchema })
+  budgetBreakdown?: TripBudgetBreakdown;
 
   @Prop({ default: false })
   aiGenerated?: boolean;

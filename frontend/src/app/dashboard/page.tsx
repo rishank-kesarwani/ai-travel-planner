@@ -7,12 +7,9 @@ import {
   Compass,
   Calendar,
   Sparkles,
-  MapPin,
   Heart,
   TrendingUp,
   ArrowRight,
-  Clock,
-  DollarSign,
   Plus,
   Luggage,
 } from 'lucide-react';
@@ -24,16 +21,16 @@ import { Trip, Destination, Favorite } from '../../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { currency, formatPrice } = useCurrency();
+  const { formatPrice } = useCurrency();
 
   // Fetch Trips
-  const { data: tripsData, isLoading: tripsLoading } = useQuery<{ items: Trip[]; total: number }>({
+  const { data: tripsData } = useQuery<{ items: Trip[]; total: number }>({
     queryKey: ['trips', 'dashboard'],
     queryFn: async () => api.get('/api/v1/trips?limit=5'),
   });
 
   // Fetch Favorites
-  const { data: favorites, isLoading: favoritesLoading } = useQuery<Favorite[]>({
+  const { data: favorites } = useQuery<Favorite[]>({
     queryKey: ['favorites'],
     queryFn: async () => api.get('/api/v1/favorites'),
   });

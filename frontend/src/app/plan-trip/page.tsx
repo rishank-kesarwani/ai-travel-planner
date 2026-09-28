@@ -5,20 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Sparkles,
   MapPin,
-  Calendar,
-  DollarSign,
   Users,
   Compass,
   CheckCircle2,
   Loader2,
-  ArrowRight,
   ShieldCheck,
   Bookmark,
   CloudSun,
-  Layers,
   AlertCircle,
-  Globe,
-  RefreshCw,
+  DollarSign,
+  Layers,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
@@ -52,12 +48,12 @@ function PlanTripContent() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [detectedDestCurrency, setDetectedDestCurrency] = useState<string | null>(null);
 
-  // Sync budget defaults when currency changes if user hasn't heavily customized
+  // Sync budget defaults when currency changes if user hasn't generated a plan yet
   useEffect(() => {
     if (!generatedPlan) {
       setBudget(currencyInfo.defaultBudget);
     }
-  }, [currencyInfo.code]);
+  }, [currencyInfo.code, currencyInfo.defaultBudget, generatedPlan]);
 
   // Check destination currency heuristic
   const handleDestinationChange = (val: string) => {
@@ -171,6 +167,9 @@ function PlanTripContent() {
         interests: generatedPlan.interests,
         preferences: generatedPlan.preferences,
         itinerary: generatedPlan.itinerary,
+        totalEstimatedCost: generatedPlan.totalEstimatedCost,
+        totalEstimatedCostUsd: generatedPlan.totalEstimatedCostUsd,
+        budgetBreakdown: generatedPlan.budgetBreakdown,
         citations: generatedPlan.citations,
         status: 'planning',
         aiGenerated: true,
@@ -492,38 +491,64 @@ function PlanTripContent() {
             </button>
           </div>
 
-          {/* Weather & Budget Badges */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {generatedPlan.weatherPreview && (
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-4">
-                <CloudSun className="w-8 h-8 text-amber-400 flex-shrink-0" />
-                <div className="text-xs space-y-0.5">
-                  <span className="font-bold text-slate-200">Weather Forecast</span>
-                  <p className="text-slate-400">
-                    {generatedPlan.weatherPreview.condition} • {generatedPlan.weatherPreview.temperatureC}°C ({generatedPlan.weatherPreview.temperatureF}°F)
-                  </p>
+          {/* Weather & Budget Breakdown Badges */}
+          <div className="space-y-4">
+            {generatedPlan.budgetBreakdown && (
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-teal-500/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-white flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-teal-400" />
+                    <span>Complete Expense Allocation Breakdown ({planCurrencyCode})</span>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-teal-500/15 text-teal-300 font-bold text-xs">
+                    {generatedPlan.isWithinBudget ? '✓ Optimal Budget Plan' : 'Custom Tailored'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                    <span className="text-slate-400">🏨 Hotel & Stays (45%)</span>
+                    <p className="text-teal-300 font-bold font-mono text-sm">
+                      {planCurrencySymbol}{(generatedPlan.budgetBreakdown.accommodationTotal || Math.round((generatedPlan.totalEstimatedCost || 50000) * 0.45)).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                    <span className="text-slate-400">🚗 Cab & Transit (15%)</span>
+                    <p className="text-teal-300 font-bold font-mono text-sm">
+                      {planCurrencySymbol}{(generatedPlan.budgetBreakdown.localTransportTotal || generatedPlan.budgetBreakdown.transportationTotal || Math.round((generatedPlan.totalEstimatedCost || 50000) * 0.15)).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                    <span className="text-slate-400">🍱 Food & Dining (25%)</span>
+                    <p className="text-teal-300 font-bold font-mono text-sm">
+                      {planCurrencySymbol}{(generatedPlan.budgetBreakdown.foodTotal || Math.round((generatedPlan.totalEstimatedCost || 50000) * 0.25)).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                    <span className="text-slate-400">🎟️ Sights & Entry (15%)</span>
+                    <p className="text-teal-300 font-bold font-mono text-sm">
+                      {planCurrencySymbol}{(generatedPlan.budgetBreakdown.activitiesTotal || Math.round((generatedPlan.totalEstimatedCost || 50000) * 0.15)).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {generatedPlan.budgetBreakdown && (
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-slate-200">Budget Breakdown ({planCurrencyCode})</span>
+            {generatedPlan.weatherPreview && (
+              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-4">
+                <CloudSun className="w-8 h-8 text-amber-400 flex-shrink-0" />
+                <div className="text-xs space-y-0.5">
+                  <span className="font-bold text-slate-200">Regional Weather Forecast</span>
                   <p className="text-slate-400">
-                    Hotels: {planCurrencySymbol}{(generatedPlan.budgetBreakdown.accommodationTotal || generatedPlan.budgetBreakdown.accommodationTotalUsd)?.toLocaleString()} • Food: {planCurrencySymbol}{(generatedPlan.budgetBreakdown.foodTotal || generatedPlan.budgetBreakdown.foodTotalUsd)?.toLocaleString()}
+                    {generatedPlan.weatherPreview.condition} • {generatedPlan.weatherPreview.temperatureC}°C ({generatedPlan.weatherPreview.temperatureF}°F) • Humidity {generatedPlan.weatherPreview.humidity}%
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 font-bold">
-                  {generatedPlan.isWithinBudget ? '✓ Within Budget' : 'Adjusted'}
-                </span>
               </div>
             )}
           </div>
 
           {/* Day-by-Day Itinerary Plan */}
           <div className="space-y-6">
-            <h3 className="text-lg font-bold text-white">Daily Schedule & Activities</h3>
+            <h3 className="text-lg font-bold text-white">Daily Comprehensive Schedule & Timeline</h3>
             <div className="space-y-4">
               {generatedPlan.itinerary?.map((day: any) => (
                 <div
@@ -535,20 +560,36 @@ function PlanTripContent() {
                       Day {day.day}: {day.theme}
                     </span>
                     <span className="text-xs text-slate-300 font-mono font-medium">
-                      Est. Daily: {planCurrencySymbol}{(day.estimatedDailyCost || day.estimatedDailyCostUsd)?.toLocaleString()}
+                      Est. Day Total: {planCurrencySymbol}{(day.estimatedDailyCost || day.estimatedDailyCostUsd)?.toLocaleString()} (Hotel, Cab & Meals incl.)
                     </span>
                   </div>
 
+                  {/* Day Stay & Transport Pill */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                      <span className="text-cyan-300 font-bold">🏨 Stay: {day.hotel?.name || `${generatedPlan.destination} Boutique Resort`}</span>
+                      <p className="text-[11px] text-slate-400">~{planCurrencySymbol}{(day.hotel?.estimatedCost || 3500)?.toLocaleString()}/night • {day.hotel?.notes || 'Boutique stay with breakfast included'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                      <span className="text-amber-300 font-bold">🚗 Transit: {day.transport?.mode || 'Private Cab / Scooter Rental'}</span>
+                      <p className="text-[11px] text-slate-400">~{planCurrencySymbol}{(day.transport?.estimatedCost || 1200)?.toLocaleString()}/day • {day.transport?.details || 'Dedicated hill transfers'}</p>
+                    </div>
+                  </div>
+
+                  {/* Activities */}
                   <div className="space-y-3">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sightseeing & Exploration</h4>
                     {day.activities?.map((act: any, aIdx: number) => (
                       <div key={aIdx} className="space-y-1 pl-3 border-l-2 border-teal-500/30">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-bold text-slate-200">{act.title}</span>
                           <div className="flex items-center gap-2">
-                            {act.estimatedCost !== undefined && act.estimatedCost > 0 && (
+                            {act.estimatedCost !== undefined && act.estimatedCost > 0 ? (
                               <span className="text-teal-300 font-mono font-bold text-[11px]">
-                                {planCurrencySymbol}{act.estimatedCost.toLocaleString()}
+                                Entry: {planCurrencySymbol}{act.estimatedCost.toLocaleString()}
                               </span>
+                            ) : (
+                              <span className="text-emerald-400 text-[11px] font-semibold">Free Entry</span>
                             )}
                             <span className="text-slate-400 text-[11px] font-mono">{act.time}</span>
                           </div>
@@ -562,7 +603,7 @@ function PlanTripContent() {
                   </div>
 
                   {day.meals && (
-                    <div className="pt-2 text-[11px] text-slate-400 border-t border-slate-800/60 flex flex-wrap gap-4">
+                    <div className="pt-2 text-[11px] text-slate-300 border-t border-slate-800/60 flex flex-wrap gap-4">
                       <span>🍳 {day.meals.breakfast}</span>
                       <span>🍱 {day.meals.lunch}</span>
                       <span>🍷 {day.meals.dinner}</span>

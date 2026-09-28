@@ -5,14 +5,10 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
-  Compass,
-  MapPin,
   Sparkles,
   Plus,
   Trash2,
-  DollarSign,
   Search,
-  Filter,
   ArrowRight,
   Luggage,
 } from 'lucide-react';
