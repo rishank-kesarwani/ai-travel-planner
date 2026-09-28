@@ -34,14 +34,16 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 glass-panel border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl 3xl:max-w-[1600px] 4k:max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center space-x-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/40 transition-all">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Compass className="w-5 h-5 text-teal-400 group-hover:rotate-45 transition-transform duration-300" />
-              </div>
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-teal-500 to-cyan-400 p-0.5 shadow-lg shadow-teal-500/20 group-hover:shadow-teal-500/40 transition-all">
+              <img
+                src="/logo.png"
+                alt="NomadAI Logo"
+                className="w-full h-full object-cover rounded-[10px] group-hover:scale-105 transition-transform duration-300"
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">

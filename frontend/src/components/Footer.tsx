@@ -5,13 +5,13 @@ import { Compass, ShieldCheck, Cpu, Database, Sparkles, Github } from 'lucide-re
 export function Footer() {
   return (
     <footer className="border-t border-slate-800/80 bg-slate-950/90 text-slate-400 text-sm mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl 3xl:max-w-[1600px] 4k:max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Info */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/40 flex items-center justify-center">
-                <Compass className="w-4 h-4 text-teal-400" />
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-teal-500/20 border border-teal-500/40 flex items-center justify-center">
+                <img src="/logo.png" alt="NomadAI Logo" className="w-full h-full object-cover" />
               </div>
               <span className="text-lg font-bold text-white tracking-tight">NomadAI</span>
             </div>
