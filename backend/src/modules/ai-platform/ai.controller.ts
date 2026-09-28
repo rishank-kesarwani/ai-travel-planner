@@ -61,6 +61,10 @@ export class GenerateTripPlanDto {
   interests?: string[];
 
   @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
   @IsObject()
   preferences?: Record<string, any>;
 }

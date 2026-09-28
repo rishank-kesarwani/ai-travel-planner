@@ -72,9 +72,10 @@ What destination or travel style are you exploring today?`,
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const suggestedPrompts = [
-    'Plan a 5 day trip to Japan.',
+    'Plan a 4-day trip to Mussoorie, India.',
+    'Plan a 5-day island getaway to Phuket, Thailand.',
     'Which destination fits my budget?',
-    'Based on my previous trips, where should I go next?',
+    'Plan a 5-day cultural trip to Kyoto, Japan.',
     'Make day 3 less tiring with shorter walking distances.',
   ];
 

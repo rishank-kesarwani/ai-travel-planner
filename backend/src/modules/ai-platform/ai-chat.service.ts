@@ -237,7 +237,67 @@ export class AiChatService {
 
     let text = '';
 
-    if (lower.includes('japan') || lower.includes('kyoto') || lower.includes('tokyo')) {
+    const userCurrency = userPrefs.preferredCurrency || 'INR';
+    const currSymbol = userCurrency === 'INR' ? '₹' : userCurrency === 'THB' ? '฿' : userCurrency === 'EUR' ? '€' : userCurrency === 'GBP' ? '£' : '$';
+
+    if (lower.includes('mussoorie') || lower.includes('manali') || lower.includes('goa') || lower.includes('india')) {
+      const destTitle = lower.includes('mussoorie') ? 'Mussoorie, Uttarakhand (Queen of the Hills)' : lower.includes('goa') ? 'Goa Coastal Getaway' : 'Scenic India Exploration';
+      text = `### 🏔️ 4-Day Itinerary: ${destTitle}
+
+Tailored to your travel style (**${userPrefs.travelStyle || 'nature & relaxation'}**) in **${userCurrency}**:
+
+#### **Day 1: Arrival & Mall Road Stroll**
+- **Morning**: Scenic drive up the Himalayan foothills, check into mountain-view resort.
+- **Afternoon**: Walk along historic Mall Road, visit Camel's Back Road for panoramic sunset views.
+- **Evening**: Dinner featuring ${userPrefs.foodPreferences?.includes('vegetarian') ? 'authentic Garhwali & North Indian vegetarian delicacies' : 'local hillside cuisine'} (~${currSymbol}1,200 / person).
+
+#### **Day 2: Cascading Waterfalls & Heritage Estates**
+- **Morning**: Kempty Falls / Company Garden morning nature walk.
+- **Afternoon**: Visit historic George Everest's House with 360-degree views of Doon Valley and snow peaks.
+- **Evening**: Tibetan cafe hopping with artisanal hot chocolate and momos (~${currSymbol}600).
+
+#### **Day 3: Cloud's End & Lal Tibba Sunrise**
+- **Morning**: Early excursion to Lal Tibba (highest viewpoint in Mussoorie) for golden hour photography.
+- **Afternoon**: Trek through dense deodar forests around Cloud's End sanctuary.
+- **Evening**: Relaxing bonfire dinner at your hillside retreat.
+
+#### **Day 4: Landour Heritage Walk & Departure**
+- **Morning**: Stroll through peaceful Landour, historic St. Paul's Church, and Char Dukan.
+- **Afternoon**: Souvenir shopping for handmade jams, cheeses, and woolens before descent.
+
+*Estimated Total Cost*: **~${currSymbol}4,500 - ${currSymbol}7,500 / day per person** (excluding transport).`;
+    } else if (lower.includes('phuket') || lower.includes('thailand') || lower.includes('bangkok')) {
+      const destTitle = lower.includes('phuket') ? 'Phuket & Andaman Islands, Thailand' : 'Thailand Explorer';
+      text = `### 🌴 5-Day Tropical Itinerary: ${destTitle}
+
+Tailored to your travel profile in **${userCurrency}**:
+
+#### **Day 1: Arrival & Old Phuket Town Charm**
+- **Morning**: Check into your beachfront resort / boutique Sino-Portuguese hotel.
+- **Afternoon**: Stroll through historic Thalang Road in Old Phuket Town admiring vibrant murals and Sino-Portuguese architecture.
+- **Evening**: Chillva Night Market street food exploration (~${currSymbol}1,000 / person).
+
+#### **Day 2: Phi Phi Islands & Maya Bay Speedboat Tour**
+- **Morning**: Speedboat excursion across turquoise waters to Maya Bay and Pileh Lagoon.
+- **Afternoon**: Snorkeling among vibrant coral reefs at Bamboo Island with fresh tropical lunch included.
+- **Evening**: Sunset dinner overlooking Kata Noi Beach.
+
+#### **Day 3: Big Buddha & Chalong Temple (Pace-Optimized)**
+- **Morning**: Visit the magnificent 45-meter Big Buddha on Nakkerd Hill with panoramic island views.
+- **Afternoon**: Wat Chalong, Phuket’s most revered Buddhist temple.
+- **Evening**: Traditional Thai herbal massage and beachside relaxation (~${currSymbol}1,500).
+
+#### **Day 4: Phang Nga Bay & James Bond Island**
+- **Morning**: Sea kayaking through dramatic limestone sea caves and emerald lagoons.
+- **Afternoon**: Floating Muslim village of Koh Panyee for seafood lunch.
+- **Evening**: Promthep Cape for the celebrated golden hour sunset.
+
+#### **Day 5: Elephant Sanctuary & Departure**
+- **Morning**: Ethical elephant sanctuary experience (feeding and bathing rescued elephants).
+- **Afternoon**: Souvenir shopping and departure transfer.
+
+*Estimated Total Cost*: **~${currSymbol}5,000 - ${currSymbol}8,500 / day per person**.`;
+    } else if (lower.includes('japan') || lower.includes('kyoto') || lower.includes('tokyo')) {
       text = `### 🌸 5-Day Japan Cultural & Scenic Itinerary
 
 Based on your verified travel profile (style: **${userPrefs.travelStyle || 'cultural'}**, dietary: **${(userPrefs.foodPreferences || ['local delicacies']).join(', ')}**, pace: **${userPrefs.walkingTolerance || 'moderate'}** walking):
@@ -266,7 +326,7 @@ Based on your verified travel profile (style: **${userPrefs.travelStyle || 'cult
 - **Morning**: Nishiki Market cultural tasting tour.
 - **Afternoon**: Souvenir shopping for artisan ceramics and matcha treats.
 
-*Estimated Total Cost*: **~$140 - $180 / day per person** (excluding long-haul flights).`;
+*Estimated Total Cost*: **~${currSymbol}12,000 - ${currSymbol}16,000 / day per person** (${userCurrency}).`;
     } else if (lower.includes('budget') || lower.includes('cheap') || lower.includes('fits my budget')) {
       text = `### 💰 Best Destinations Tailored to Your Budget
 

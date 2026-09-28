@@ -2,6 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AiPlatformClient } from './ai-platform.client';
 import { ToolsService } from '../tools/tools.service';
 import { UsersService } from '../users/users.service';
+import {
+  DEFAULT_CURRENCY,
+  getCurrencyInfo,
+  convertFromUsd,
+  detectCurrencyFromCountryOrLocation,
+} from '../../common/constants/currencies.constant';
 
 export interface GenerateTripPlanInput {
   userId: string;
@@ -10,6 +16,7 @@ export interface GenerateTripPlanInput {
   endDate: string;
   numberOfDays?: number;
   budget?: number;
+  currency?: string;
   travelers?: number;
   interests?: string[];
   preferences?: Record<string, any>;
@@ -47,6 +54,14 @@ export class AiWorkflowService {
       ...(input.preferences || {}),
     };
 
+    // Determine target currency (prioritize input -> user preference -> destination detection -> INR default)
+    const targetCurrency =
+      input.currency ||
+      userPrefs.preferredCurrency ||
+      detectCurrencyFromCountryOrLocation(input.destination) ||
+      DEFAULT_CURRENCY;
+    const currencyInfo = getCurrencyInfo(targetCurrency);
+
     // Step 3: Retrieve Travel Knowledge via RAG
     const ragResult = await this.aiClient.queryRag({
       applicationId: 'ai-travel-planner',
@@ -68,6 +83,7 @@ export class AiWorkflowService {
         name: input.destination,
         description: `Stunning global destination featuring rich culture and scenic sights.`,
         averageDailyCost: 150,
+        currency: currencyInfo.code,
         topAttractions: [],
       };
     }
@@ -81,6 +97,7 @@ export class AiWorkflowService {
         endDate: input.endDate,
         numberOfDays: input.numberOfDays || 5,
         budget: input.budget || 1500,
+        currency: currencyInfo.code,
         travelers: input.travelers || 1,
         interests: input.interests || ['culture', 'sightseeing'],
         userPreferences: userPrefs,
@@ -93,14 +110,17 @@ export class AiWorkflowService {
     if (remoteResult && remoteResult.itinerary) {
       return {
         ...remoteResult,
+        currency: currencyInfo.code,
+        currencySymbol: currencyInfo.symbol,
         citations: remoteResult.citations || ragResult.citations,
       };
     }
 
     // Step 6 & 7: Robust In-Engine Graph Construction & Budget Validation
     const days = input.numberOfDays || this.calculateDays(input.startDate, input.endDate);
-    const budget = input.budget || days * (destinationDetails.averageDailyCost || 150);
     const travelers = input.travelers || 1;
+    const baseDailyCostInCurrency = convertFromUsd(destinationDetails.averageDailyCost || 150, currencyInfo.code);
+    const budget = input.budget || days * baseDailyCostInCurrency * travelers;
 
     // Budget Calculation tool
     const budgetCalculation = await this.toolsService.executeTool('calculateBudget', {
@@ -109,6 +129,7 @@ export class AiWorkflowService {
       travelers,
       budgetTier: userPrefs.budgetRange || 'moderate',
       userBudget: budget,
+      currency: currencyInfo.code,
     });
 
     // Weather tool
@@ -124,18 +145,19 @@ export class AiWorkflowService {
       input.interests || ['culture', 'sightseeing'],
       userPrefs,
       weather,
+      currencyInfo.code,
     );
 
     const citations: Array<{ title: string; source: string; snippet?: string }> = [
       {
         title: `${destinationDetails.name || input.destination} Comprehensive Travel Guide`,
         source: 'Curated Verified Travel Knowledge Base',
-        snippet: `Verified top attractions, pricing, and optimal transit routes for ${destinationDetails.name || input.destination}.`,
+        snippet: `Verified top attractions, pricing in ${currencyInfo.code} (${currencyInfo.symbol}), and optimal transit routes for ${destinationDetails.name || input.destination}.`,
       },
       {
         title: `User Profile & Travel Memory Preferences`,
         source: 'AI Platform Memory Store',
-        snippet: `Personalized pace (${userPrefs.walkingTolerance || 'moderate'} walking), dietary styles (${(userPrefs.foodPreferences || []).join(', ') || 'authentic cuisine'}), and budget constraints.`,
+        snippet: `Personalized pace (${userPrefs.walkingTolerance || 'moderate'} walking), dietary styles (${(userPrefs.foodPreferences || []).join(', ') || 'authentic cuisine'}), and budget constraints in ${currencyInfo.code}.`,
       },
     ];
 
@@ -150,11 +172,13 @@ export class AiWorkflowService {
       endDate: input.endDate,
       numberOfDays: days,
       budget,
-      currency: destinationDetails.currency || 'USD',
+      currency: currencyInfo.code,
+      currencySymbol: currencyInfo.symbol,
       travelers,
       interests: input.interests || ['culture', 'sightseeing'],
       preferences: userPrefs,
       itinerary,
+      totalEstimatedCost: budgetCalculation.totalEstimatedCost,
       totalEstimatedCostUsd: budgetCalculation.totalEstimatedUsd,
       isWithinBudget: budgetCalculation.isWithinUserBudget,
       budgetBreakdown: budgetCalculation.breakdown,
@@ -163,11 +187,11 @@ export class AiWorkflowService {
       aiGenerated: true,
       workflowStepsCompleted: [
         'Analyze Request',
-        'Load User Preferences',
+        'Load User Preferences & Currency Context',
         'Retrieve Relevant Travel Knowledge (RAG)',
         'Search Destination Data',
         'Generate Draft Itinerary',
-        'Calculate Budget & Cost Allocation',
+        'Calculate Budget & Local Currency Allocation',
         'Validate Itinerary & Safety Checks',
         'Synthesize Final Personalized Itinerary',
       ],
@@ -188,6 +212,7 @@ export class AiWorkflowService {
     interests: string[],
     prefs: any,
     weather: any,
+    targetCurrency = 'INR',
   ) {
     const attractions = destDetails?.topAttractions || [];
     const days = [];
@@ -217,6 +242,10 @@ export class AiWorkflowService {
         estimatedTimeHours: 2,
       };
 
+      const attr1Cost = convertFromUsd(attr1.costUsd || 15, targetCurrency);
+      const attr2Cost = convertFromUsd(attr2.costUsd || 0, targetCurrency);
+      const dailyMealsAndTransport = convertFromUsd(70, targetCurrency);
+
       const dailyActivities = [
         {
           time: '09:00 AM - 11:30 AM',
@@ -225,6 +254,7 @@ export class AiWorkflowService {
           location: destination,
           durationHours: attr1.estimatedTimeHours || 2.5,
           estimatedCostUsd: attr1.costUsd || 15,
+          estimatedCost: attr1Cost,
           category: 'sightseeing',
           tips: 'Arrive early to beat peak morning crowds and capture prime photography lighting.',
         },
@@ -235,6 +265,7 @@ export class AiWorkflowService {
           location: destination,
           durationHours: attr2.estimatedTimeHours || 2,
           estimatedCostUsd: attr2.costUsd || 0,
+          estimatedCost: attr2Cost,
           category: 'cultural',
           tips: `Aligned with your ${prefs.walkingTolerance || 'moderate'} walking preference.`,
         },
@@ -245,12 +276,13 @@ export class AiWorkflowService {
           location: destination,
           durationHours: 2,
           estimatedCostUsd: 0,
+          estimatedCost: 0,
           category: 'relaxation',
           tips: 'Ideal vantage point for relaxation and ambient dining.',
         },
       ];
 
-      const dailyCost = (attr1.costUsd || 15) + (attr2.costUsd || 0) + 70; // 70 for meals/transport
+      const dailyCost = attr1Cost + attr2Cost + dailyMealsAndTransport;
 
       days.push({
         day: i,
@@ -261,10 +293,12 @@ export class AiWorkflowService {
           lunch: `Authentic regional cuisine (${(prefs.foodPreferences || []).join(', ') || 'local specialties'})`,
           dinner: 'Curated dinner experience with panoramic skyline or garden views',
         },
-        estimatedDailyCostUsd: dailyCost,
+        estimatedDailyCostUsd: (attr1.costUsd || 15) + (attr2.costUsd || 0) + 70,
+        estimatedDailyCost: dailyCost,
       });
     }
 
     return days;
   }
 }
+

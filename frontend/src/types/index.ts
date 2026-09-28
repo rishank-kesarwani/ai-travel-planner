@@ -8,6 +8,7 @@ export interface UserPreferences {
   preferredDestinations: string[];
   walkingTolerance: string;
   accommodationPreference: string;
+  preferredCurrency?: string;
 }
 
 export interface User {
@@ -55,6 +56,7 @@ export interface TripActivity {
   location?: string;
   durationHours?: number;
   estimatedCostUsd?: number;
+  estimatedCost?: number;
   category?: string;
   tips?: string;
 }
@@ -70,6 +72,7 @@ export interface DayPlan {
     dinner?: string;
   };
   estimatedDailyCostUsd?: number;
+  estimatedDailyCost?: number;
 }
 
 export interface TripCitation {
@@ -88,11 +91,13 @@ export interface Trip {
   numberOfDays: number;
   budget: number;
   currency: string;
+  currencySymbol?: string;
   travelers: number;
   interests: string[];
   preferences?: Record<string, any>;
   itinerary: DayPlan[];
   status: 'planning' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  totalEstimatedCost?: number;
   totalEstimatedCostUsd?: number;
   aiGenerated?: boolean;
   citations?: TripCitation[];

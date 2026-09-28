@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
+import { useCurrency } from '../../lib/currency-context';
 import { Destination, Favorite } from '../../types';
 
 export default function DestinationsPage() {
   const { user } = useAuth();
+  const { currency, formatPrice, convertPrice } = useCurrency();
   const queryClient = useQueryClient();
 
   const [query, setQuery] = useState('');
@@ -191,7 +193,7 @@ export default function DestinationsPage() {
 
                     <div className="flex items-center justify-between text-xs text-slate-300 pt-1">
                       <span className="font-semibold text-teal-400">
-                        ${dest.averageDailyCost} <span className="text-[10px] text-slate-500">/ day avg</span>
+                        {formatPrice(convertPrice(dest.averageDailyCost, 'USD'))} <span className="text-[10px] text-slate-500">/ day avg ({currency})</span>
                       </span>
                       <span className="text-slate-400 text-[11px]">{dest.country}</span>
                     </div>

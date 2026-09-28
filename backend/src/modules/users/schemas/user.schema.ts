@@ -26,6 +26,9 @@ export class UserPreferences {
 
   @Prop({ default: 'boutique_hotel' })
   accommodationPreference: string;
+
+  @Prop({ default: 'INR' })
+  preferredCurrency: string;
 }
 
 export const UserPreferencesSchema = SchemaFactory.createForClass(UserPreferences);

@@ -39,6 +39,11 @@ export class UpdatePreferencesDto {
   @IsOptional()
   @IsString()
   accommodationPreference?: string;
+
+  @ApiPropertyOptional({ example: 'INR' })
+  @IsOptional()
+  @IsString()
+  preferredCurrency?: string;
 }
 
 export class UpdateUserDto {

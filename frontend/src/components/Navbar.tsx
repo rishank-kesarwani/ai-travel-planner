@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
+import { CurrencySelector } from './CurrencySelector';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -83,8 +84,10 @@ export function Navbar() {
             })}
           </div>
 
-          {/* Desktop Auth Controls */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Desktop Auth & Currency Controls */}
+          <div className="hidden md:flex items-center space-x-2.5">
+            <CurrencySelector />
+
             {user ? (
               <div className="flex items-center space-x-2">
                 <Link
@@ -122,8 +125,9 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="flex md:hidden items-center">
+          {/* Mobile Controls */}
+          <div className="flex md:hidden items-center space-x-2">
+            <CurrencySelector compact />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"

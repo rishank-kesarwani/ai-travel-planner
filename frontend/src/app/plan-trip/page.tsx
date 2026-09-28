@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Sparkles,
@@ -17,25 +17,30 @@ import {
   CloudSun,
   Layers,
   AlertCircle,
+  Globe,
+  RefreshCw,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
+import { useCurrency } from '../../lib/currency-context';
+import { detectCurrencyFromDestination } from '../../lib/currencies';
 
 function PlanTripContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialDest = searchParams?.get('destination') || 'Kyoto, Japan';
+  const initialDest = searchParams?.get('destination') || 'Mussoorie, India';
   const { user } = useAuth();
+  const { currency, currencyInfo, setCurrency, supportedCurrencies } = useCurrency();
 
   const [destination, setDestination] = useState(initialDest);
   const [startDate, setStartDate] = useState('2026-10-15');
   const [endDate, setEndDate] = useState('2026-10-20');
   const [numberOfDays, setNumberOfDays] = useState(5);
-  const [budget, setBudget] = useState(1500);
+  const [budget, setBudget] = useState(currencyInfo.defaultBudget);
   const [travelers, setTravelers] = useState(1);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
     'culture',
-    'historical_sites',
+    'nature',
     'food',
   ]);
   const [walkingTolerance, setWalkingTolerance] = useState('moderate');
@@ -45,6 +50,33 @@ function PlanTripContent() {
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [detectedDestCurrency, setDetectedDestCurrency] = useState<string | null>(null);
+
+  // Sync budget defaults when currency changes if user hasn't heavily customized
+  useEffect(() => {
+    if (!generatedPlan) {
+      setBudget(currencyInfo.defaultBudget);
+    }
+  }, [currencyInfo.code]);
+
+  // Check destination currency heuristic
+  const handleDestinationChange = (val: string) => {
+    setDestination(val);
+    const detected = detectCurrencyFromDestination(val);
+    if (detected && detected !== currency) {
+      setDetectedDestCurrency(detected);
+    } else {
+      setDetectedDestCurrency(null);
+    }
+  };
+
+  const applyDetectedCurrency = () => {
+    if (detectedDestCurrency && supportedCurrencies[detectedDestCurrency]) {
+      setCurrency(detectedDestCurrency);
+      setBudget(supportedCurrencies[detectedDestCurrency].defaultBudget);
+      setDetectedDestCurrency(null);
+    }
+  };
 
   const availableInterests = [
     { id: 'culture', label: 'Cultural Temples & Heritage' },
@@ -58,12 +90,12 @@ function PlanTripContent() {
   ];
 
   const graphSteps = [
-    'Analyzing Travel Request & Routing Workflow...',
+    'Analyzing Travel Request & Detecting Regional Currency...',
     'Loading User Profile Preferences & Travel Memory...',
     'Retrieving Travel Knowledge from Vector RAG Index...',
     'Executing Domain Tools (Weather, Hotel, Attractions)...',
-    'Generating Multi-Day Personalized Schedule...',
-    'Calculating Budget Allocation & Itemized Expenses...',
+    'Generating Multi-Day Personalized Schedule in Target Currency...',
+    'Calculating Localized Budget Allocation & Expenses...',
     'Validating Pacing & Verifying Source Citations...',
     'Synthesizing Verified Final Itinerary!',
   ];
@@ -102,11 +134,13 @@ function PlanTripContent() {
         endDate,
         numberOfDays: Number(numberOfDays),
         budget: Number(budget),
+        currency: currencyInfo.code,
         travelers: Number(travelers),
         interests: selectedInterests,
         preferences: {
           walkingTolerance,
           foodPreferences: user.preferences?.foodPreferences || ['local_delicacies'],
+          preferredCurrency: currencyInfo.code,
         },
       });
 
@@ -132,6 +166,7 @@ function PlanTripContent() {
         endDate: generatedPlan.endDate,
         numberOfDays: generatedPlan.numberOfDays,
         budget: generatedPlan.budget,
+        currency: generatedPlan.currency || currencyInfo.code,
         travelers: generatedPlan.travelers,
         interests: generatedPlan.interests,
         preferences: generatedPlan.preferences,
@@ -149,18 +184,21 @@ function PlanTripContent() {
     }
   };
 
+  const planCurrencySymbol = generatedPlan?.currencySymbol || currencyInfo.symbol;
+  const planCurrencyCode = generatedPlan?.currency || currencyInfo.code;
+
   return (
     <div className="max-w-5xl mx-auto space-y-10 py-4">
       <div className="text-center space-y-2 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-          <span>LangGraph Autonomous Trip Planner</span>
+          <span>Multi-Currency Autonomous Trip Planner</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
           Craft Your Perfect Itinerary
         </h1>
         <p className="text-xs sm:text-sm text-slate-400">
-          Enter your trip parameters. The AI Platform executes a stateful planning graph grounded in RAG knowledge and user preferences.
+          Enter your destination and budget parameters. All costs are synthesized dynamically in your preferred currency ({currencyInfo.code} {currencyInfo.symbol}).
         </p>
       </div>
 
@@ -177,7 +215,7 @@ function PlanTripContent() {
         className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-8"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Destination */}
+          {/* Destination & Quick Currency Switch Hint */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-teal-400" />
@@ -186,11 +224,25 @@ function PlanTripContent() {
             <input
               type="text"
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="e.g. Kyoto, Japan or Rome, Italy"
+              onChange={(e) => handleDestinationChange(e.target.value)}
+              placeholder="e.g. Mussoorie, India or Phuket, Thailand or Kyoto, Japan"
               required
               className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-teal-400 font-medium"
             />
+            {detectedDestCurrency && detectedDestCurrency !== currency && (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-300">
+                <span>
+                  Destination currency detected: <strong>{detectedDestCurrency} ({supportedCurrencies[detectedDestCurrency]?.symbol})</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={applyDetectedCurrency}
+                  className="px-2.5 py-1 rounded-lg bg-teal-500 text-slate-950 font-bold text-[11px] hover:bg-teal-400 transition-colors"
+                >
+                  Switch to {detectedDestCurrency}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Travelers & Walking Tolerance */}
@@ -262,24 +314,52 @@ function PlanTripContent() {
             </div>
           </div>
 
-          {/* Budget */}
-          <div className="space-y-2">
+          {/* Currency Selector & Dynamic Budget Slider */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                 <DollarSign className="w-4 h-4 text-teal-400" />
-                <span>Target Total Budget (USD)</span>
+                <span>Budget & Currency</span>
               </label>
-              <span className="text-sm font-extrabold text-teal-300">${budget}</span>
+
+              {/* Currency Dropdown in Form */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={currency}
+                  onChange={(e) => {
+                    const newCurr = e.target.value;
+                    setCurrency(newCurr);
+                    setBudget(supportedCurrencies[newCurr]?.defaultBudget || 50000);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-teal-300 text-xs font-bold focus:outline-none focus:border-teal-400"
+                >
+                  {Object.values(supportedCurrencies).map((item) => (
+                    <option key={item.code} value={item.code}>
+                      {item.flag} {item.code} ({item.symbol})
+                    </option>
+                  ))}
+                </select>
+
+                <span className="text-sm font-extrabold text-teal-300 font-mono">
+                  {currencyInfo.symbol}{budget.toLocaleString()}
+                </span>
+              </div>
             </div>
+
             <input
               type="range"
-              min={300}
-              max={10000}
-              step={100}
+              min={currencyInfo.minBudget}
+              max={currencyInfo.maxBudget}
+              step={currencyInfo.step}
               value={budget}
               onChange={(e) => setBudget(Number(e.target.value))}
-              className="w-full accent-teal-400"
+              className="w-full accent-teal-400 cursor-pointer"
             />
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>{currencyInfo.symbol}{currencyInfo.minBudget.toLocaleString()}</span>
+              <span className="text-slate-400">Target Range ({currencyInfo.code})</span>
+              <span>{currencyInfo.symbol}{currencyInfo.maxBudget.toLocaleString()}</span>
+            </div>
           </div>
         </div>
 
@@ -317,12 +397,12 @@ function PlanTripContent() {
           {isGenerating ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Running LangGraph Workflow...</span>
+              <span>Running LangGraph Workflow in {currencyInfo.code}...</span>
             </>
           ) : (
             <>
               <Sparkles className="w-5 h-5" />
-              <span>Generate AI Itinerary</span>
+              <span>Generate AI Itinerary ({currencyInfo.code})</span>
             </>
           )}
         </button>
@@ -340,7 +420,7 @@ function PlanTripContent() {
                 LangGraph Planning Pipeline Active
               </h3>
               <p className="text-xs text-teal-400 font-mono">
-                ai-platform::travel-itinerary-generator
+                ai-platform::travel-itinerary-generator [{currencyInfo.code}]
               </p>
             </div>
           </div>
@@ -381,15 +461,15 @@ function PlanTripContent() {
         <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-teal-500/40 space-y-8 animate-fade-in shadow-2xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-xs font-semibold">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-xs font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>AI Graph Execution Succeeded</span>
+                <span>AI Graph Execution Succeeded • {planCurrencyCode}</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
                 {generatedPlan.destination} ({generatedPlan.numberOfDays} Days)
               </h2>
               <p className="text-xs text-slate-400">
-                {generatedPlan.startDate} → {generatedPlan.endDate} • {generatedPlan.travelers} Traveler(s) • Est. Cost: ${generatedPlan.totalEstimatedCostUsd}
+                {generatedPlan.startDate} → {generatedPlan.endDate} • {generatedPlan.travelers} Traveler(s) • Est. Total: <span className="text-teal-300 font-bold">{planCurrencySymbol}{(generatedPlan.totalEstimatedCost || generatedPlan.totalEstimatedCostUsd)?.toLocaleString()}</span>
               </p>
             </div>
 
@@ -429,9 +509,9 @@ function PlanTripContent() {
             {generatedPlan.budgetBreakdown && (
               <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
                 <div>
-                  <span className="font-bold text-slate-200">Budget Breakdown</span>
+                  <span className="font-bold text-slate-200">Budget Breakdown ({planCurrencyCode})</span>
                   <p className="text-slate-400">
-                    Hotels: ${generatedPlan.budgetBreakdown.accommodationTotalUsd} • Food: ${generatedPlan.budgetBreakdown.foodTotalUsd}
+                    Hotels: {planCurrencySymbol}{(generatedPlan.budgetBreakdown.accommodationTotal || generatedPlan.budgetBreakdown.accommodationTotalUsd)?.toLocaleString()} • Food: {planCurrencySymbol}{(generatedPlan.budgetBreakdown.foodTotal || generatedPlan.budgetBreakdown.foodTotalUsd)?.toLocaleString()}
                   </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 font-bold">
@@ -454,8 +534,8 @@ function PlanTripContent() {
                     <span className="text-sm font-bold text-teal-400">
                       Day {day.day}: {day.theme}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">
-                      Est. Daily: ${day.estimatedDailyCostUsd}
+                    <span className="text-xs text-slate-300 font-mono font-medium">
+                      Est. Daily: {planCurrencySymbol}{(day.estimatedDailyCost || day.estimatedDailyCostUsd)?.toLocaleString()}
                     </span>
                   </div>
 
@@ -464,7 +544,14 @@ function PlanTripContent() {
                       <div key={aIdx} className="space-y-1 pl-3 border-l-2 border-teal-500/30">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-bold text-slate-200">{act.title}</span>
-                          <span className="text-slate-400 text-[11px] font-mono">{act.time}</span>
+                          <div className="flex items-center gap-2">
+                            {act.estimatedCost !== undefined && act.estimatedCost > 0 && (
+                              <span className="text-teal-300 font-mono font-bold text-[11px]">
+                                {planCurrencySymbol}{act.estimatedCost.toLocaleString()}
+                              </span>
+                            )}
+                            <span className="text-slate-400 text-[11px] font-mono">{act.time}</span>
+                          </div>
                         </div>
                         <p className="text-xs text-slate-400">{act.description}</p>
                         {act.tips && (
@@ -491,7 +578,7 @@ function PlanTripContent() {
             <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-teal-400">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Verified RAG Citations (No Hallucinations)</span>
+                <span>Verified RAG Citations & Local Currency Grounding</span>
               </div>
               <div className="space-y-1.5">
                 {generatedPlan.citations.map((c: any, cIdx: number) => (
@@ -516,7 +603,7 @@ export default function PlanTripPage() {
       fallback={
         <div className="py-20 text-center space-y-3">
           <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-400">Loading AI Trip Planner Wizard...</p>
+          <p className="text-xs text-slate-400">Loading Multi-Currency AI Trip Planner Wizard...</p>
         </div>
       }
     >

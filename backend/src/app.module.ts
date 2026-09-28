@@ -18,6 +18,7 @@ import { ToolsModule } from './modules/tools/tools.module';
 import { AiPlatformModule } from './modules/ai-platform/ai-platform.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HealthModule } from './modules/health/health.module';
+import { GeoModule } from './modules/geo/geo.module';
 
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -63,6 +64,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     AiPlatformModule,
     NotificationsModule,
     HealthModule,
+    GeoModule,
   ],
   providers: [
     {

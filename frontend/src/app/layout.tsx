@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { QueryProvider } from '../lib/query-provider';
 import { AuthProvider } from '../lib/auth-context';
+import { CurrencyProvider } from '../lib/currency-context';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 
@@ -49,11 +50,13 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col antialiased bg-slate-950 text-slate-100 selection:bg-teal-500/30 selection:text-teal-200 overflow-x-hidden">
         <QueryProvider>
           <AuthProvider>
-            <Navbar />
-            <main className="flex-1 max-w-7xl 3xl:max-w-[1600px] 4k:max-w-[2000px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
-              {children}
-            </main>
-            <Footer />
+            <CurrencyProvider>
+              <Navbar />
+              <main className="flex-1 max-w-7xl 3xl:max-w-[1600px] 4k:max-w-[2000px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+                {children}
+              </main>
+              <Footer />
+            </CurrencyProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

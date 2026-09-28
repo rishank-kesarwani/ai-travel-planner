@@ -170,6 +170,7 @@ export class ToolsService {
         const days = Number(args.numberOfDays) || 5;
         const travelers = Number(args.travelers) || 1;
         const tier = args.budgetTier || 'moderate';
+        const targetCurrency = args.currency || 'INR';
 
         let baseDailyCost = 150;
         try {
@@ -188,19 +189,46 @@ export class ToolsService {
 
         const totalEstimatedUsd = (accommodationDaily + foodDaily + activitiesDaily + transportDaily) * days;
 
+        // Convert to target currency (e.g. INR, THB)
+        const rates: Record<string, { rate: number; symbol: string }> = {
+          INR: { rate: 83.5, symbol: '₹' },
+          THB: { rate: 36.5, symbol: '฿' },
+          USD: { rate: 1.0, symbol: '$' },
+          EUR: { rate: 0.92, symbol: '€' },
+          GBP: { rate: 0.78, symbol: '£' },
+          JPY: { rate: 155.0, symbol: '¥' },
+          AED: { rate: 3.67, symbol: 'AED' },
+          CAD: { rate: 1.36, symbol: 'CA$' },
+          AUD: { rate: 1.52, symbol: 'A$' },
+          SGD: { rate: 1.35, symbol: 'S$' },
+        };
+
+        const currData = rates[targetCurrency.toUpperCase()] || rates.INR;
+        const rate = currData.rate;
+
+        const totalEstimated = Math.round(totalEstimatedUsd * rate);
+        const userBudget = args.userBudget || totalEstimated;
+
         return {
           destination: args.destination,
           numberOfDays: days,
           travelers,
           budgetTier: tier,
+          currency: targetCurrency.toUpperCase(),
+          currencySymbol: currData.symbol,
           breakdown: {
             accommodationTotalUsd: accommodationDaily * days,
             foodTotalUsd: foodDaily * days,
             activitiesTotalUsd: activitiesDaily * days,
             localTransportTotalUsd: transportDaily * days,
+            accommodationTotal: Math.round(accommodationDaily * days * rate),
+            foodTotal: Math.round(foodDaily * days * rate),
+            activitiesTotal: Math.round(activitiesDaily * days * rate),
+            localTransportTotal: Math.round(transportDaily * days * rate),
           },
           totalEstimatedUsd,
-          isWithinUserBudget: (args.userBudget ? totalEstimatedUsd <= args.userBudget : true),
+          totalEstimatedCost: totalEstimated,
+          isWithinUserBudget: userBudget >= totalEstimated,
         };
       }
 

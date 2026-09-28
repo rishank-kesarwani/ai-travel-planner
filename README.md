@@ -17,18 +17,19 @@
 1. [Overview & Highlights](#-overview--highlights)
 2. [High-Level Architecture (HLD)](#-high-level-architecture-hld)
 3. [Low-Level Architecture (LLD)](#-low-level-architecture-lld)
-4. [LangGraph AI Travel Planning Workflow](#-langgraph-ai-travel-planning-workflow)
-5. [RAG Ingestion, Retrieval & Citations](#-rag-ingestion-retrieval--citations)
-6. [Tool Calling Architecture](#-tool-calling-architecture)
-7. [Authentication & Security Flow](#-authentication--security-flow)
-8. [Database Schemas & Indexing](#-database-schemas--indexing)
-9. [Redis Caching & Asynchronous BullMQ Queues](#-redis-caching--asynchronous-bullmq-queues)
-10. [REST API Specification](#-rest-api-specification)
-11. [Local Development & Quick Start](#-local-development--quick-start)
-12. [Testing Strategy](#-testing-strategy)
-13. [Docker & Containerized Deployment](#-docker--containerized-deployment)
-14. [Production Hardening & Failure Handling](#-production-hardening--failure-handling)
-15. [Environment Variables](#-environment-variables)
+4. [Dynamic Multi-Currency & Hybrid Geo-Detection](#-dynamic-multi-currency--hybrid-geo-detection)
+5. [LangGraph AI Travel Planning Workflow](#-langgraph-ai-travel-planning-workflow)
+6. [RAG Ingestion, Retrieval & Citations](#-rag-ingestion-retrieval--citations)
+7. [Tool Calling Architecture](#-tool-calling-architecture)
+8. [Authentication & Security Flow](#-authentication--security-flow)
+9. [Database Schemas & Indexing](#-database-schemas--indexing)
+10. [Redis Caching & Asynchronous BullMQ Queues](#-redis-caching--asynchronous-bullmq-queues)
+11. [REST API Specification](#-rest-api-specification)
+12. [Local Development & Quick Start](#-local-development--quick-start)
+13. [Testing Strategy](#-testing-strategy)
+14. [Docker & Containerized Deployment](#-docker--containerized-deployment)
+15. [Production Hardening & Failure Handling](#-production-hardening--failure-handling)
+16. [Environment Variables](#-environment-variables)
 
 ---
 
@@ -137,8 +138,54 @@ backend/src/
     ├── ai-platform/           # AiPlatformClient, WorkflowService, AiChatService
     ├── queues/                # BullMQ producers & async indexing processors
     ├── redis/                 # Resilient Redis service with in-memory fallback
-    └── health/                # MongoDB, Redis, AI Platform liveness checks
+    ├── health/                # MongoDB, Redis, AI Platform liveness checks
+    └── geo/                   # Header & timezone geo-detection + exchange rates
 ```
+
+---
+
+## 💱 Dynamic Multi-Currency & Hybrid Geo-Detection
+
+TravelPlanner AI features an enterprise multi-currency engine defaulting to **INR (`₹`)** with real-time dynamic detection, customizable budget scales, and localized itinerary synthesis.
+
+```mermaid
+graph TD
+    Landing([User Lands on Website]) --> Detect[Detect Country / Currency]
+    Detect --> Headers{Edge IP Headers present?}
+    Headers -- Yes: cf-ipcountry / x-country-code --> SetHeader[Use Country Currency]
+    Headers -- No: Localhost / Proxy --> TZ[Read Browser Timezone e.g. Asia/Kolkata]
+    TZ --> SetTZ[Resolve Currency or Default INR]
+    SetHeader --> Storage[(Save to localStorage & State)]
+    SetTZ --> Storage
+    Storage --> UserLogin{User logs in / registers?}
+    UserLogin -- Yes --> SyncDB[(Sync preferredCurrency to MongoDB User Profile)]
+    UserLogin -- No --> Guest[Guest Mode: INR or Detected Currency]
+    SyncDB --> Planner[Plan Trip / Chatbot / Itinerary Generation]
+    Guest --> Planner
+    Planner --> Localize[Synthesize Daily Activities, Hotels & Meals in Target Currency]
+```
+
+### Supported Currencies & Scaling
+| Currency | Symbol | Name | Rate (USD) | Default Range | Step |
+| :--- | :---: | :--- | :--- | :--- | :--- |
+| **INR** *(Default)* | **₹** | Indian Rupee | 83.5 | ₹10,000 – ₹800,000 | ₹5,000 |
+| **THB** | **฿** | Thai Baht | 36.5 | ฿5,000 – ฿350,000 | ฿2,000 |
+| **USD** | **$** | US Dollar | 1.0 | $300 – $10,000 | $100 |
+| **EUR** | **€** | Euro | 0.92 | €300 – €9,000 | €100 |
+| **GBP** | **£** | British Pound | 0.78 | £250 – £8,000 | £100 |
+| **JPY** | **¥** | Japanese Yen | 155.0 | ¥40,000 – ¥1,500,000 | ¥10,000 |
+| **AED** | **AED** | UAE Dirham | 3.67 | AED 1,000 – AED 35,000 | AED 500 |
+| **CAD** | **CA$** | Canadian Dollar | 1.36 | CA$400 – CA$13,000 | CA$100 |
+| **AUD** | **A$** | Australian Dollar | 1.52 | A$450 – A$15,000 | A$100 |
+| **SGD** | **S$** | Singapore Dollar | 1.35 | S$400 – S$13,500 | S$100 |
+
+### Key Features:
+1. **Dynamic Heuristics on Destination Typing**: Typing destinations such as `"Phuket, Thailand"` or `"Mussoorie, India"` automatically detects regional currencies (`THB`, `INR`) and offers instant one-click switching.
+2. **Dynamic Range Slider**: Sliders automatically scale their min, max, step, and labels to the chosen currency.
+3. **Navbar & Form Dropdowns**: Sleek glassmorphism currency dropdown allows explorers to switch currencies globally anytime.
+4. **Backend Localized Cost Calculation**: Itineraries return converted itemized breakdowns for accommodation, local transit, food, and daily activities.
+
+---
 
 ---
 
@@ -323,6 +370,7 @@ sequenceDiagram
 | `POST` | `/api/v1/ai/chat/stream` | User | Real-time SSE streaming assistant |
 | `POST` | `/api/v1/ai/rag/query` | User | Direct vector RAG query with citations |
 | `POST` | `/api/v1/tools/execute` | Service | Secure domain tool invocation callback |
+| `GET` | `/api/v1/geo/detect` | Public | Edge header & timezone geo-location and currency detector |
 | `GET` | `/api/v1/health` | Public | Microservice readiness & health checks |
 
 ---
