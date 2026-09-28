@@ -47,6 +47,19 @@ export class UsersController {
     return this.usersService.updatePreferences(user.userId, prefs);
   }
 
+  @Patch('change-password')
+  @ApiOperation({ summary: 'Change current user password' })
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() changePasswordDto: { currentPassword: string; newPassword: string },
+  ) {
+    return this.usersService.changePassword(
+      user.userId,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    );
+  }
+
   @Get()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'List all users (Admin only)' })

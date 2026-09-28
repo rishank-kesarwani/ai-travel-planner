@@ -166,4 +166,57 @@ export class NotificationService {
 
     await this.client.sendNotification(payload);
   }
+
+  /**
+   * 4. Send Password Reset Email & Notification
+   */
+  async sendPasswordResetNotification(user: {
+    id: string;
+    email: string;
+    name: string;
+    resetUrl: string;
+  }): Promise<void> {
+    const payload: IngestNotificationPayload = {
+      idempotencyKey: `pwd_reset_${user.id}_${Date.now()}`,
+      priority: 'CRITICAL',
+      channels: ['EMAIL'],
+      recipient: {
+        userId: user.id,
+        email: user.email,
+      },
+      email: {
+        subject: `🔐 Reset Your NomadAI Password`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #f8fafc; border-radius: 16px; padding: 32px; border: 1px solid #1e293b;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <h1 style="color: #2dd4bf; margin: 0; font-size: 24px;">NomadAI Security</h1>
+              <p style="color: #94a3b8; font-size: 14px; margin-top: 6px;">Password Reset Request</p>
+            </div>
+            <div style="background-color: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+              <h2 style="font-size: 16px; color: #ffffff; margin-top: 0;">Hello ${user.name},</h2>
+              <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">
+                We received a request to reset the password for your NomadAI account. Click the button below to choose a new password. This link will expire in 1 hour.
+              </p>
+              <div style="text-align: center; margin: 24px 0 12px;">
+                <a href="${user.resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #14b8a6, #06b6d4); color: #020617; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-size: 14px;">
+                  Reset Password 🔑
+                </a>
+              </div>
+              <p style="color: #94a3b8; font-size: 12px; margin-top: 16px; line-height: 1.5;">
+                If you did not request a password reset, you can safely ignore this email. Your password will not change.
+              </p>
+            </div>
+            <p style="color: #64748b; font-size: 11px; text-align: center;">NomadAI Security Service • Protected by Token Hash Verification</p>
+          </div>
+        `,
+      },
+      metadata: {
+        event: 'PASSWORD_RESET_REQUEST',
+        userId: user.id,
+      },
+    };
+
+    await this.client.sendNotification(payload);
+  }
 }
+

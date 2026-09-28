@@ -12,6 +12,8 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { JwtPayload } from '../../common/interfaces/auth-user.interface';
 import { UserRole } from '../../common/enums/roles.enum';
 
+import * as crypto from 'crypto';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,6 +22,54 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
   ) {}
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    const user = await this.usersService.setResetPasswordToken(email, tokenHash, expires);
+    if (user) {
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+      const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+
+      this.notificationService
+        .sendPasswordResetNotification({
+          id: (user as any)._id.toString(),
+          email: user.email,
+          name: user.name,
+          resetUrl,
+        })
+        .catch(() => {});
+    }
+
+    return {
+      success: true,
+      message: 'If an account exists with this email, a password reset link has been sent.',
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    if (!token) {
+      throw new BadRequestException('Reset token is required');
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.usersService.findByResetPasswordToken(tokenHash);
+    if (!user) {
+      throw new BadRequestException('Password reset token is invalid or has expired');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+    await this.usersService.resetPassword((user as any)._id.toString(), newPasswordHash);
+
+    return {
+      success: true,
+      message: 'Password has been reset successfully. You can now log in with your new password.',
+    };
+  }
 
   async register(registerDto: RegisterDto) {
     const salt = await bcrypt.genSalt(10);

@@ -51,3 +51,14 @@ export class UpdateUserDto {
   @IsOptional()
   preferences?: UpdatePreferencesDto;
 }
+
+export class ChangePasswordDto {
+  @ApiPropertyOptional({ example: 'CurrentSecure123!' })
+  @IsString()
+  currentPassword: string;
+
+  @ApiPropertyOptional({ example: 'NewSecurePassword456!' })
+  @IsString()
+  newPassword: string;
+}
+

@@ -75,7 +75,59 @@ export class UsersService {
     return this.update(userId, { preferences: prefs });
   }
 
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new ConflictException('Current password is incorrect');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+    await this.userModel.findByIdAndUpdate(userId, {
+      passwordHash: newPasswordHash,
+      refreshTokenHash: null,
+    });
+
+    return { success: true, message: 'Password successfully changed' };
+  }
+
+  async setResetPasswordToken(email: string, tokenHash: string, expires: Date): Promise<UserDocument | null> {
+    return this.userModel.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      {
+        resetPasswordTokenHash: tokenHash,
+        resetPasswordExpires: expires,
+      },
+      { new: true },
+    );
+  }
+
+  async findByResetPasswordToken(tokenHash: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+  }
+
+  async resetPassword(userId: string, newPasswordHash: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      passwordHash: newPasswordHash,
+      refreshTokenHash: null,
+      resetPasswordTokenHash: null,
+      resetPasswordExpires: null,
+    });
+  }
+
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().select('-passwordHash -refreshTokenHash');
   }
 }
+
+
