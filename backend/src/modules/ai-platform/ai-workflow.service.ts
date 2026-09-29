@@ -88,6 +88,9 @@ export class AiWorkflowService {
       };
     }
 
+    // Calculate duration from dates
+    const days = input.numberOfDays || this.calculateDays(input.startDate, input.endDate);
+
     // Step 5: Try Remote LangGraph execution on AI Platform
     const remoteResult = await this.aiClient.executeWorkflow(
       'travel-itinerary-generator',
@@ -95,7 +98,7 @@ export class AiWorkflowService {
         destination: input.destination,
         startDate: input.startDate,
         endDate: input.endDate,
-        numberOfDays: input.numberOfDays || 5,
+        numberOfDays: days,
         budget: input.budget || 1500,
         currency: currencyInfo.code,
         travelers: input.travelers || 1,
@@ -110,6 +113,7 @@ export class AiWorkflowService {
     if (remoteResult && remoteResult.itinerary) {
       return {
         ...remoteResult,
+        numberOfDays: days,
         currency: currencyInfo.code,
         currencySymbol: currencyInfo.symbol,
         citations: remoteResult.citations || ragResult.citations,
@@ -117,7 +121,6 @@ export class AiWorkflowService {
     }
 
     // Step 6 & 7: Robust In-Engine Graph Construction & Budget Validation
-    const days = input.numberOfDays || this.calculateDays(input.startDate, input.endDate);
     const travelers = input.travelers || 1;
     const baseDailyCostInCurrency = convertFromUsd(destinationDetails.averageDailyCost || 150, currencyInfo.code);
     const budget = input.budget || days * baseDailyCostInCurrency * travelers;

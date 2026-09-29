@@ -28,8 +28,17 @@ export class TripsService {
     const currency = createDto.currency || 'INR';
     const { totalTarget, totalUsd, breakdown } = this.calculateTotalCostAndBreakdown(createDto.itinerary, currency);
 
+    let numberOfDays = createDto.numberOfDays;
+    if ((!numberOfDays || numberOfDays <= 0) && createDto.startDate && createDto.endDate) {
+      const d1 = new Date(createDto.startDate);
+      const d2 = new Date(createDto.endDate);
+      const diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+      numberOfDays = diff > 0 ? diff : 1;
+    }
+
     const trip = new this.tripModel({
       ...createDto,
+      numberOfDays: numberOfDays || 5,
       currency,
       userId: new Types.ObjectId(user.userId),
       totalEstimatedCost: createDto.totalEstimatedCost || totalTarget,

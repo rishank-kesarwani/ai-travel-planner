@@ -143,10 +143,11 @@ export class CreateTripDto {
   @IsNotEmpty()
   endDate: string;
 
-  @ApiProperty({ example: 5 })
+  @ApiPropertyOptional({ example: 5 })
+  @IsOptional()
   @IsNumber()
   @Min(1)
-  numberOfDays: number;
+  numberOfDays?: number;
 
   @ApiProperty({ example: 1500 })
   @IsNumber()

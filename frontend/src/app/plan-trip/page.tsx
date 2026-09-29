@@ -15,6 +15,7 @@ import {
   AlertCircle,
   DollarSign,
   Layers,
+  X,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
@@ -24,14 +25,13 @@ import { detectCurrencyFromDestination } from '../../lib/currencies';
 function PlanTripContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialDest = searchParams?.get('destination') || 'Mussoorie, India';
+  const initialDest = searchParams?.get('destination') || '';
   const { user } = useAuth();
   const { currency, currencyInfo, setCurrency, supportedCurrencies } = useCurrency();
 
   const [destination, setDestination] = useState(initialDest);
   const [startDate, setStartDate] = useState('2026-10-15');
   const [endDate, setEndDate] = useState('2026-10-20');
-  const [numberOfDays, setNumberOfDays] = useState(5);
   const [budget, setBudget] = useState(currencyInfo.defaultBudget);
   const [travelers, setTravelers] = useState(1);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
@@ -40,6 +40,44 @@ function PlanTripContent() {
     'food',
   ]);
   const [walkingTolerance, setWalkingTolerance] = useState('moderate');
+
+  // Dynamic automatic day calculation based on user start and end date selection
+  const calculatedDays = React.useMemo(() => {
+    if (!startDate || !endDate) return 5;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 1;
+  }, [startDate, endDate]);
+
+  const handleStartDateChange = (newStart: string) => {
+    setStartDate(newStart);
+    if (newStart && endDate) {
+      const start = new Date(newStart);
+      const end = new Date(endDate);
+      const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      if (diff <= 0) {
+        // Auto-advance end date forward to maintain at least 1 day
+        const nextEnd = new Date(start);
+        nextEnd.setDate(nextEnd.getDate() + 5);
+        setEndDate(nextEnd.toISOString().split('T')[0]);
+      }
+    }
+  };
+
+  const handleEndDateChange = (newEnd: string) => {
+    setEndDate(newEnd);
+    if (startDate && newEnd) {
+      const start = new Date(startDate);
+      const end = new Date(newEnd);
+      const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      if (diff <= 0) {
+        const prevStart = new Date(end);
+        prevStart.setDate(prevStart.getDate() - 1);
+        setStartDate(prevStart.toISOString().split('T')[0]);
+      }
+    }
+  };
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentGraphStep, setCurrentGraphStep] = useState<number>(0);
@@ -128,7 +166,7 @@ function PlanTripContent() {
         destination,
         startDate,
         endDate,
-        numberOfDays: Number(numberOfDays),
+        numberOfDays: calculatedDays,
         budget: Number(budget),
         currency: currencyInfo.code,
         travelers: Number(travelers),
@@ -160,7 +198,7 @@ function PlanTripContent() {
         destinationSlug: generatedPlan.destinationSlug,
         startDate: generatedPlan.startDate,
         endDate: generatedPlan.endDate,
-        numberOfDays: generatedPlan.numberOfDays,
+        numberOfDays: generatedPlan.numberOfDays || calculatedDays,
         budget: generatedPlan.budget,
         currency: generatedPlan.currency || currencyInfo.code,
         travelers: generatedPlan.travelers,
@@ -214,20 +252,33 @@ function PlanTripContent() {
         className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-8"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Destination & Quick Currency Switch Hint */}
+          {/* Destination with inside clear button & Quick Currency Switch Hint */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-teal-400" />
               <span>Target Destination</span>
             </label>
-            <input
-              type="text"
-              value={destination}
-              onChange={(e) => handleDestinationChange(e.target.value)}
-              placeholder="e.g. Mussoorie, India or Phuket, Thailand or Kyoto, Japan"
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-teal-400 font-medium"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={destination}
+                onChange={(e) => handleDestinationChange(e.target.value)}
+                placeholder="e.g. Mussoorie, Goa, Phuket, Kyoto..."
+                required
+                className="w-full pl-4 pr-10 py-3 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-teal-400 font-medium placeholder:text-slate-500"
+              />
+              {destination && (
+                <button
+                  type="button"
+                  onClick={() => handleDestinationChange('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors"
+                  title="Clear destination"
+                  aria-label="Clear destination"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             {detectedDestCurrency && detectedDestCurrency !== currency && (
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-300">
                 <span>
@@ -278,37 +329,33 @@ function PlanTripContent() {
             </div>
           </div>
 
-          {/* Dates & Duration */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Dates & Dynamic Duration (Days input removed) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase text-slate-300">Start Date</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Start Date</label>
+              </div>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-teal-400"
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-teal-400 font-medium"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase text-slate-300">End Date</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">End Date</label>
+                <span className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-300 text-[10px] font-bold border border-teal-500/30">
+                  {calculatedDays} {calculatedDays === 1 ? 'Day' : 'Days'} Duration
+                </span>
+              </div>
               <input
                 type="date"
+                min={startDate}
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-teal-400"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase text-slate-300">Days</label>
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={numberOfDays}
-                onChange={(e) => setNumberOfDays(Number(e.target.value))}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-teal-400"
+                onChange={(e) => handleEndDateChange(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-teal-400 font-medium"
               />
             </div>
           </div>

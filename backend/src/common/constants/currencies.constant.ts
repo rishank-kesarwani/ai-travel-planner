@@ -14,9 +14,9 @@ export const SUPPORTED_CURRENCIES: Record<string, CurrencyDefinition> = {
     symbol: '₹',
     name: 'Indian Rupee',
     rateFromUsd: 83.5,
-    defaultMinBudget: 25000,
-    defaultMaxBudget: 800000,
-    step: 5000,
+    defaultMinBudget: 10000,
+    defaultMaxBudget: 2000000,
+    step: 10000,
   },
   THB: {
     code: 'THB',

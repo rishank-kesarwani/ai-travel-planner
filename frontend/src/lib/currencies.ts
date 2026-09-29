@@ -18,8 +18,8 @@ export const SUPPORTED_CURRENCIES: Record<string, CurrencyInfo> = {
     flag: '🇮🇳',
     rateFromUsd: 83.5,
     minBudget: 10000,
-    maxBudget: 800000,
-    step: 5000,
+    maxBudget: 2000000,
+    step: 10000,
     defaultBudget: 60000,
   },
   THB: {
