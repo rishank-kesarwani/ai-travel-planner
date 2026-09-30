@@ -22,6 +22,10 @@ import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth-context';
 import { useCurrency } from '../../../lib/currency-context';
 import { Destination, WeatherData, Review, Favorite } from '../../../types';
+import { AdBanner } from '../../../components/ads/AdBanner';
+import { HotelRecommendations } from '../../../components/affiliates/HotelRecommendations';
+import { ActivityRecommendations } from '../../../components/affiliates/ActivityRecommendations';
+import { AffiliateDisclosure } from '../../../components/affiliates/AffiliateDisclosure';
 
 export default function DestinationDetailPage() {
   const params = useParams();
@@ -392,6 +396,26 @@ export default function DestinationDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Curated Partner Hotel Recommendations */}
+      <HotelRecommendations
+        destination={destination.name}
+      />
+
+      {/* Sponsored Ad Banner */}
+      <AdBanner
+        slot="3344556677"
+        label="Sponsored Travel Opportunities"
+        className="my-4"
+      />
+
+      {/* Curated Tours & Experiences Tickets */}
+      <ActivityRecommendations
+        destination={destination.name}
+      />
+
+      {/* Affiliate Partner Disclosure */}
+      <AffiliateDisclosure />
     </div>
   );
 }

@@ -48,13 +48,13 @@ export function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5 whitespace-nowrap">
-                TravelPlanner AI
+                PlannerTravel
                 <span className="hidden sm:inline-block text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                  v2.0
+                  .in
                 </span>
               </span>
               <span className="text-[11px] text-slate-400 font-medium tracking-wide hidden xl:inline">
-                Next-Gen Travel Intelligence
+                Smart AI Travel Companion
               </span>
             </div>
           </Link>

@@ -105,6 +105,35 @@ export interface TripBudgetBreakdown {
   activitiesTotalUsd?: number;
 }
 
+export interface RecommendedHotelItem {
+  name: string;
+  type?: string;
+  stars?: number;
+  rating?: number;
+  reviewCount?: number;
+  pricePerNightUsd?: number;
+  pricePerNight?: number;
+  location?: string;
+  amenities?: string[];
+  badge?: string;
+  bookingUrl?: string;
+}
+
+export interface RecommendedActivityItem {
+  title: string;
+  description?: string;
+  category?: string;
+  durationHours?: number;
+  durationText?: string;
+  rating?: number;
+  reviewCount?: number;
+  priceUsd?: number;
+  price?: number;
+  badge?: string;
+  instantConfirmation?: boolean;
+  freeCancellation?: boolean;
+}
+
 export interface TripCitation {
   title: string;
   source: string;
@@ -126,6 +155,8 @@ export interface Trip {
   interests: string[];
   preferences?: Record<string, any>;
   itinerary: DayPlan[];
+  recommendedHotels?: RecommendedHotelItem[];
+  recommendedActivities?: RecommendedActivityItem[];
   status: 'planning' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
   totalEstimatedCost?: number;
   totalEstimatedCostUsd?: number;

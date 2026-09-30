@@ -11,6 +11,8 @@ import {
   Layers,
   CheckCircle2,
 } from 'lucide-react';
+import { AdBanner } from '../components/ads/AdBanner';
+import { AffiliateDisclosure } from '../components/affiliates/AffiliateDisclosure';
 
 export default function HomePage() {
   const featuredDestinations = [
@@ -224,6 +226,13 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Sponsored Partner Deals Banner */}
+      <AdBanner
+        slot="1122334455"
+        label="Featured Partner Deals"
+        className="my-6"
+      />
+
       {/* Conceptual Workflow Diagram */}
       <section className="glass-panel rounded-3xl p-8 border border-teal-500/20 bg-gradient-to-b from-slate-900/60 to-slate-950/80 space-y-6">
         <div className="text-center space-y-2 max-w-xl mx-auto">
@@ -265,6 +274,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Affiliate Partner Disclosure */}
+      <AffiliateDisclosure />
     </div>
   );
 }

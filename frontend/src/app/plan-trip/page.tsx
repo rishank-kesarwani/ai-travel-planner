@@ -21,6 +21,11 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import { useCurrency } from '../../lib/currency-context';
 import { detectCurrencyFromDestination } from '../../lib/currencies';
+import { AdBanner } from '../../components/ads/AdBanner';
+import { HotelRecommendations } from '../../components/affiliates/HotelRecommendations';
+import { ActivityRecommendations } from '../../components/affiliates/ActivityRecommendations';
+import { AffiliateDisclosure } from '../../components/affiliates/AffiliateDisclosure';
+import { getBookingHotelLink, getGetYourGuideLink } from '../../lib/affiliates';
 
 function PlanTripContent() {
   const router = useRouter();
@@ -593,73 +598,121 @@ function PlanTripContent() {
             )}
           </div>
 
+          {/* Affiliate Partner Hotel Recommendations */}
+          <HotelRecommendations
+            destination={generatedPlan.destination}
+            startDate={generatedPlan.startDate}
+            endDate={generatedPlan.endDate}
+            hotels={generatedPlan.recommendedHotels}
+          />
+
+          {/* AdSense Display Slot */}
+          <AdBanner
+            slot="4567891230"
+            label="Featured Travel Partner"
+            className="my-6"
+          />
+
           {/* Day-by-Day Itinerary Plan */}
           <div className="space-y-6">
             <h3 className="text-lg font-bold text-white">Daily Comprehensive Schedule & Timeline</h3>
             <div className="space-y-4">
-              {generatedPlan.itinerary?.map((day: any) => (
-                <div
-                  key={day.day}
-                  className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 border-b border-slate-800/80">
-                    <span className="text-sm font-bold text-teal-400">
-                      Day {day.day}: {day.theme}
-                    </span>
-                    <span className="text-xs text-slate-300 font-mono font-medium">
-                      Est. Day Total: {planCurrencySymbol}{(day.estimatedDailyCost || day.estimatedDailyCostUsd)?.toLocaleString()} (Hotel, Cab & Meals incl.)
-                    </span>
-                  </div>
+              {generatedPlan.itinerary?.map((day: any) => {
+                const hotelName = day.hotel?.name || `${generatedPlan.destination} Boutique Resort`;
+                const hotelBookUrl = getBookingHotelLink(hotelName, generatedPlan.destination, generatedPlan.startDate, generatedPlan.endDate);
 
-                  {/* Day Stay & Transport Pill */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
-                      <span className="text-cyan-300 font-bold">🏨 Stay: {day.hotel?.name || `${generatedPlan.destination} Boutique Resort`}</span>
-                      <p className="text-[11px] text-slate-400">~{planCurrencySymbol}{(day.hotel?.estimatedCost || 3500)?.toLocaleString()}/night • {day.hotel?.notes || 'Boutique stay with breakfast included'}</p>
+                return (
+                  <div
+                    key={day.day}
+                    className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 border-b border-slate-800/80">
+                      <span className="text-sm font-bold text-teal-400">
+                        Day {day.day}: {day.theme}
+                      </span>
+                      <span className="text-xs text-slate-300 font-mono font-medium">
+                        Est. Day Total: {planCurrencySymbol}{(day.estimatedDailyCost || day.estimatedDailyCostUsd)?.toLocaleString()} (Hotel, Cab & Meals incl.)
+                      </span>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
-                      <span className="text-amber-300 font-bold">🚗 Transit: {day.transport?.mode || 'Private Cab / Scooter Rental'}</span>
-                      <p className="text-[11px] text-slate-400">~{planCurrencySymbol}{(day.transport?.estimatedCost || 1200)?.toLocaleString()}/day • {day.transport?.details || 'Dedicated hill transfers'}</p>
-                    </div>
-                  </div>
 
-                  {/* Activities */}
-                  <div className="space-y-3">
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sightseeing & Exploration</h4>
-                    {day.activities?.map((act: any, aIdx: number) => (
-                      <div key={aIdx} className="space-y-1 pl-3 border-l-2 border-teal-500/30">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-200">{act.title}</span>
-                          <div className="flex items-center gap-2">
-                            {act.estimatedCost !== undefined && act.estimatedCost > 0 ? (
-                              <span className="text-teal-300 font-mono font-bold text-[11px]">
-                                Entry: {planCurrencySymbol}{act.estimatedCost.toLocaleString()}
-                              </span>
-                            ) : (
-                              <span className="text-emerald-400 text-[11px] font-semibold">Free Entry</span>
-                            )}
-                            <span className="text-slate-400 text-[11px] font-mono">{act.time}</span>
-                          </div>
+                    {/* Day Stay & Transport Pill with Affiliate CTA */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3.5 rounded-xl bg-slate-950/60 border border-cyan-500/20 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-cyan-300 font-bold">🏨 Stay: {hotelName}</span>
+                          <a
+                            href={hotelBookUrl}
+                            target="_blank"
+                            rel="noopener noreferrer sponsored"
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 whitespace-nowrap transition-colors"
+                          >
+                            Check Rates ↗
+                          </a>
                         </div>
-                        <p className="text-xs text-slate-400">{act.description}</p>
-                        {act.tips && (
-                          <p className="text-[11px] text-teal-400/90 italic">Tip: {act.tips}</p>
-                        )}
+                        <p className="text-[11px] text-slate-400">~{planCurrencySymbol}{(day.hotel?.estimatedCost || 3500)?.toLocaleString()}/night • {day.hotel?.notes || 'Boutique stay with breakfast included'}</p>
                       </div>
-                    ))}
-                  </div>
 
-                  {day.meals && (
-                    <div className="pt-2 text-[11px] text-slate-300 border-t border-slate-800/60 flex flex-wrap gap-4">
-                      <span>🍳 {day.meals.breakfast}</span>
-                      <span>🍱 {day.meals.lunch}</span>
-                      <span>🍷 {day.meals.dinner}</span>
+                      <div className="p-3.5 rounded-xl bg-slate-950/60 border border-amber-500/20 space-y-2">
+                        <span className="text-amber-300 font-bold block">🚗 Transit: {day.transport?.mode || 'Private Cab / Scooter Rental'}</span>
+                        <p className="text-[11px] text-slate-400">~{planCurrencySymbol}{(day.transport?.estimatedCost || 1200)?.toLocaleString()}/day • {day.transport?.details || 'Dedicated hill transfers'}</p>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Activities */}
+                    <div className="space-y-3">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sightseeing & Exploration</h4>
+                      {day.activities?.map((act: any, aIdx: number) => {
+                        const actBookingUrl = getGetYourGuideLink(act.title, generatedPlan.destination);
+                        return (
+                          <div key={aIdx} className="space-y-1.5 pl-3 border-l-2 border-teal-500/30">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-200">{act.title}</span>
+                              <div className="flex items-center gap-2">
+                                {act.estimatedCost !== undefined && act.estimatedCost > 0 ? (
+                                  <span className="text-teal-300 font-mono font-bold text-[11px]">
+                                    Entry: {planCurrencySymbol}{act.estimatedCost.toLocaleString()}
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-400 text-[11px] font-semibold">Free Entry</span>
+                                )}
+                                <span className="text-slate-400 text-[11px] font-mono">{act.time}</span>
+                                <a
+                                  href={actBookingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer sponsored"
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 whitespace-nowrap transition-colors"
+                                >
+                                  Book Tickets ↗
+                                </a>
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-400">{act.description}</p>
+                            {act.tips && (
+                              <p className="text-[11px] text-teal-400/90 italic">Tip: {act.tips}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {day.meals && (
+                      <div className="pt-2 text-[11px] text-slate-300 border-t border-slate-800/60 flex flex-wrap gap-4">
+                        <span>🍳 {day.meals.breakfast}</span>
+                        <span>🍱 {day.meals.lunch}</span>
+                        <span>🍷 {day.meals.dinner}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
+
+          {/* Activity & Tour Affiliate Recommendations */}
+          <ActivityRecommendations
+            destination={generatedPlan.destination}
+            activities={generatedPlan.recommendedActivities}
+          />
 
           {/* Citations Footer */}
           {generatedPlan.citations && generatedPlan.citations.length > 0 && (
@@ -679,6 +732,9 @@ function PlanTripContent() {
               </div>
             </div>
           )}
+
+          {/* Affiliate Disclosure Compliance */}
+          <AffiliateDisclosure />
         </div>
       )}
     </div>

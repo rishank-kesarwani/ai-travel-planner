@@ -23,6 +23,11 @@ import {
 import { api } from '../../../lib/api';
 import { Trip, WeatherData } from '../../../types';
 import { getCurrency, detectCurrencyFromDestination } from '../../../lib/currencies';
+import { AdBanner } from '../../../components/ads/AdBanner';
+import { HotelRecommendations } from '../../../components/affiliates/HotelRecommendations';
+import { ActivityRecommendations } from '../../../components/affiliates/ActivityRecommendations';
+import { AffiliateDisclosure } from '../../../components/affiliates/AffiliateDisclosure';
+import { getBookingHotelLink, getGetYourGuideLink } from '../../../lib/affiliates';
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -342,9 +347,19 @@ export default function TripDetailPage() {
                     ~{currInfo.symbol}{dayHotelCost.toLocaleString()}/night
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-white">
-                  {activeDay.hotel?.name || `${trip.destination} Panorama Resort & Heritage Spa`}
-                </h4>
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="text-sm font-bold text-white">
+                    {activeDay.hotel?.name || `${trip.destination} Panorama Resort & Heritage Spa`}
+                  </h4>
+                  <a
+                    href={getBookingHotelLink(activeDay.hotel?.name || `${trip.destination} Resort`, trip.destination, trip.startDate, trip.endDate)}
+                    target="_blank"
+                    rel="noopener noreferrer sponsored"
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 whitespace-nowrap transition-colors"
+                  >
+                    Check Booking.com ↗
+                  </a>
+                </div>
                 <p className="text-[11px] text-slate-400">
                   {activeDay.hotel?.notes || `Comfortable boutique resort stay with mountain views and breakfast included.`}
                 </p>
@@ -383,6 +398,7 @@ export default function TripDetailPage() {
                       : (activity.estimatedCostUsd || 0) > 0
                       ? Math.round((activity.estimatedCostUsd || 0) * currInfo.rateFromUsd)
                       : 0;
+                  const gygLink = getGetYourGuideLink(activity.title, trip.destination);
 
                   return (
                     <div
@@ -401,7 +417,7 @@ export default function TripDetailPage() {
                       <div className="space-y-2 flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                           <h3 className="text-sm font-bold text-white">{activity.title}</h3>
-                          <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                          <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5 text-teal-400" />
                               {activity.time}
@@ -415,6 +431,14 @@ export default function TripDetailPage() {
                                 Free Entry
                               </span>
                             )}
+                            <a
+                              href={gygLink}
+                              target="_blank"
+                              rel="noopener noreferrer sponsored"
+                              className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 whitespace-nowrap transition-colors"
+                            >
+                              Tickets ↗
+                            </a>
                           </div>
                         </div>
 
@@ -473,6 +497,27 @@ export default function TripDetailPage() {
         )}
       </div>
 
+      {/* Curated Hotel Partner Recommendations */}
+      <HotelRecommendations
+        destination={trip.destination}
+        startDate={trip.startDate}
+        endDate={trip.endDate}
+        hotels={trip.recommendedHotels}
+      />
+
+      {/* AdSense Display Unit */}
+      <AdBanner
+        slot="9876543210"
+        label="Sponsored Travel Opportunities"
+        className="my-4"
+      />
+
+      {/* Recommended Activities & Tour Tickets */}
+      <ActivityRecommendations
+        destination={trip.destination}
+        activities={trip.recommendedActivities}
+      />
+
       {/* Citations Footer */}
       {trip.citations && trip.citations.length > 0 && (
         <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
@@ -493,6 +538,9 @@ export default function TripDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Affiliate Partner Disclosure */}
+      <AffiliateDisclosure />
     </div>
   );
 }

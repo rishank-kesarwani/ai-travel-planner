@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { QueryProvider } from '../lib/query-provider';
 import { AuthProvider } from '../lib/auth-context';
@@ -14,9 +15,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'TravelPlanner AI - Autonomous Travel Planner & Intelligence Assistant',
+  title: 'PlannerTravel - Autonomous AI Travel Planner & Intelligence Assistant',
   description:
-    'Experience next-generation autonomous travel planning powered by LangGraph workflows, vector RAG citations, and real-time streaming intelligence.',
+    'Experience next-generation autonomous travel planning powered by LangGraph workflows, vector RAG citations, real-time multi-currency intelligence, and verified partner rates.',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -29,9 +30,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: 'TravelPlanner AI - Autonomous AI Travel Planner',
+    title: 'PlannerTravel - Autonomous AI Travel Planner',
     description: 'Next-generation AI travel planning with real-time SSE streaming and RAG memory.',
-    images: [{ url: '/logo.png', width: 1024, height: 1024, alt: 'TravelPlanner AI Logo' }],
+    images: [{ url: '/logo.png', width: 1024, height: 1024, alt: 'PlannerTravel Logo' }],
   },
 };
 
@@ -40,12 +41,30 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+
   return (
     <html lang="en" className="dark scroll-smooth">
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="alternate icon" href="/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {adsenseClientId && (
+          <Script
+            id="adsbygoogle-init"
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
+        <Script
+          id="travelpayouts-drive-script"
+          async
+          src="https://tpembars.com/NTc5NjI5.js?t=579629"
+          strategy="afterInteractive"
+          data-cmp-ab="2"
+        />
       </head>
       <body className="min-h-screen flex flex-col antialiased bg-slate-950 text-slate-100 selection:bg-teal-500/30 selection:text-teal-200 overflow-x-hidden">
         <QueryProvider>
