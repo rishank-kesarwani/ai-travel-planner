@@ -2,8 +2,8 @@ import React from 'react';
 import { ShieldCheck, Lock, Eye, FileText } from 'lucide-react';
 
 export const metadata = {
-  title: 'Privacy Policy - PlannerTravel',
-  description: 'Privacy Policy and Cookie Disclosures for PlannerTravel AI.',
+  title: 'Privacy Policy - TravelPlanner AI',
+  description: 'Privacy Policy and Cookie Disclosures for TravelPlanner AI.',
 };
 
 export default function PrivacyPage() {
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
             <span>1. Information We Collect</span>
           </h2>
           <p>
-            When you use PlannerTravel (PlannerTravel.in), we collect information to provide intelligent AI travel planning services. This includes user account details (name, email), trip preferences (budget, travel style, dietary preferences), and anonymous usage analytics.
+            When you use TravelPlanner AI (travel-planner.rishankkesarwani.com), we collect information to provide intelligent AI travel planning services. This includes user account details (name, email), trip preferences (budget, travel style, dietary preferences), and anonymous usage analytics.
           </p>
         </section>
 
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             <span>3. Affiliate Marketing Disclosure</span>
           </h2>
           <p>
-            PlannerTravel participates in travel affiliate programs (including Booking.com, Agoda, GetYourGuide, Viator, and Travelpayouts). Some links on this site are affiliate links, meaning that if you click on the link and make a purchase or booking, we may receive an affiliate commission at no extra cost to you.
+            TravelPlanner AI participates in travel affiliate programs (including Booking.com, Agoda, GetYourGuide, Viator, and Travelpayouts). Some links on this site are affiliate links, meaning that if you click on the link and make a purchase or booking, we may receive an affiliate commission at no extra cost to you.
           </p>
         </section>
 
@@ -70,8 +70,7 @@ export default function PrivacyPage() {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-white">5. Contact Us</h2>
           <p>
-            If you have questions regarding this Privacy Policy, please contact us at{' '}
-            <span className="text-teal-300 font-mono">support@plannertravel.in</span>.
+            If you have questions regarding this Privacy Policy, please reach out via our contact channels.
           </p>
         </section>
       </div>

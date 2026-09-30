@@ -2,8 +2,8 @@ import React from 'react';
 import { FileCheck, Shield, AlertTriangle } from 'lucide-react';
 
 export const metadata = {
-  title: 'Terms of Service - PlannerTravel',
-  description: 'Terms of Service for PlannerTravel AI.',
+  title: 'Terms of Service - TravelPlanner AI',
+  description: 'Terms of Service for TravelPlanner AI.',
 };
 
 export default function TermsPage() {
@@ -22,21 +22,21 @@ export default function TermsPage() {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-white">1. Acceptance of Terms</h2>
           <p>
-            By accessing and using PlannerTravel (plannertravel.in), you accept and agree to be bound by these Terms of Service.
+            By accessing and using TravelPlanner AI (travel-planner.rishankkesarwani.com), you accept and agree to be bound by these Terms of Service.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-bold text-white">2. AI Generated Itineraries & Recommendations</h2>
           <p>
-            PlannerTravel uses autonomous AI platforms and vector knowledge systems to generate travel suggestions, estimated costs, and day-by-day itineraries. While we strive for maximum accuracy, actual prices, opening hours, visa requirements, and venue availability may vary. Users are advised to confirm specific bookings directly with third-party providers.
+            TravelPlanner AI uses autonomous AI platforms and vector knowledge systems to generate travel suggestions, estimated costs, and day-by-day itineraries. While we strive for maximum accuracy, actual prices, opening hours, visa requirements, and venue availability may vary. Users are advised to confirm specific bookings directly with third-party providers.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-bold text-white">3. Third-Party Bookings & Affiliate Links</h2>
           <p>
-            PlannerTravel connects users with third-party travel partners (such as Booking.com, Agoda, Viator, GetYourGuide). All reservations, cancellations, and customer service inquiries regarding booked stays or tickets are managed directly by the respective third-party provider.
+            TravelPlanner AI connects users with third-party travel partners (such as Booking.com, Agoda, Viator, GetYourGuide). All reservations, cancellations, and customer service inquiries regarding booked stays or tickets are managed directly by the respective third-party provider.
           </p>
         </section>
 

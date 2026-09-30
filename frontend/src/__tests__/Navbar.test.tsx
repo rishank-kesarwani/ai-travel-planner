@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Navbar } from '../components/Navbar';
 import { AuthProvider } from '../lib/auth-context';
+import { CurrencyProvider } from '../lib/currency-context';
 
 jest.mock('next/navigation', () => ({
   usePathname: () => '/',
@@ -13,7 +14,9 @@ describe('Navbar Component', () => {
   it('renders the brand title and public links', () => {
     render(
       <AuthProvider>
-        <Navbar />
+        <CurrencyProvider>
+          <Navbar />
+        </CurrencyProvider>
       </AuthProvider>,
     );
 
