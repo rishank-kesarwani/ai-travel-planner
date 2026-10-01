@@ -25,6 +25,7 @@ import { AdBanner } from '../../components/ads/AdBanner';
 import { HotelRecommendations } from '../../components/affiliates/HotelRecommendations';
 import { ActivityRecommendations } from '../../components/affiliates/ActivityRecommendations';
 import { AffiliateDisclosure } from '../../components/affiliates/AffiliateDisclosure';
+import { AuthModal } from '../../components/AuthModal';
 import { getBookingHotelLink, getGetYourGuideLink } from '../../lib/affiliates';
 
 function PlanTripContent() {
@@ -88,6 +89,7 @@ function PlanTripContent() {
   const [currentGraphStep, setCurrentGraphStep] = useState<number>(0);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [detectedDestCurrency, setDetectedDestCurrency] = useState<string | null>(null);
 
@@ -149,11 +151,6 @@ function PlanTripContent() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
     setErrorMsg(null);
     setIsGenerating(true);
     setCurrentGraphStep(0);
@@ -178,7 +175,7 @@ function PlanTripContent() {
         interests: selectedInterests,
         preferences: {
           walkingTolerance,
-          foodPreferences: user.preferences?.foodPreferences || ['local_delicacies'],
+          foodPreferences: user?.preferences?.foodPreferences || ['local_delicacies'],
           preferredCurrency: currencyInfo.code,
         },
       });
@@ -194,36 +191,55 @@ function PlanTripContent() {
     }
   };
 
-  const handleSaveTrip = async () => {
-    if (!generatedPlan) return;
+  const executeSaveTrip = async (planToSave?: any) => {
+    const plan = planToSave || generatedPlan;
+    if (!plan) return;
     setIsSaving(true);
+    setErrorMsg(null);
     try {
       const saved: any = await api.post('/api/v1/trips', {
-        destination: generatedPlan.destination,
-        destinationSlug: generatedPlan.destinationSlug,
-        startDate: generatedPlan.startDate,
-        endDate: generatedPlan.endDate,
-        numberOfDays: generatedPlan.numberOfDays || calculatedDays,
-        budget: generatedPlan.budget,
-        currency: generatedPlan.currency || currencyInfo.code,
-        travelers: generatedPlan.travelers,
-        interests: generatedPlan.interests,
-        preferences: generatedPlan.preferences,
-        itinerary: generatedPlan.itinerary,
-        totalEstimatedCost: generatedPlan.totalEstimatedCost,
-        totalEstimatedCostUsd: generatedPlan.totalEstimatedCostUsd,
-        budgetBreakdown: generatedPlan.budgetBreakdown,
-        citations: generatedPlan.citations,
+        destination: plan.destination,
+        destinationSlug: plan.destinationSlug,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        numberOfDays: plan.numberOfDays || calculatedDays,
+        budget: plan.budget,
+        currency: plan.currency || currencyInfo.code,
+        travelers: plan.travelers,
+        interests: plan.interests,
+        preferences: plan.preferences,
+        itinerary: plan.itinerary,
+        totalEstimatedCost: plan.totalEstimatedCost,
+        totalEstimatedCostUsd: plan.totalEstimatedCostUsd,
+        budgetBreakdown: plan.budgetBreakdown,
+        citations: plan.citations,
         status: 'planning',
         aiGenerated: true,
       });
 
-      router.push(`/trips/${saved._id || (saved as any)?.data?._id}`);
+      const savedId = saved._id || (saved as any)?.data?._id || (saved as any)?.id;
+      if (savedId) {
+        router.push(`/trips/${savedId}`);
+      } else {
+        router.push('/trips');
+      }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to save trip to your account.');
+      if (err.status === 401 || err.response?.status === 401) {
+        setShowAuthModal(true);
+      } else {
+        setErrorMsg(err.message || 'Failed to save trip to your account.');
+      }
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSaveTripClick = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    executeSaveTrip();
   };
 
   const planCurrencySymbol = generatedPlan?.currencySymbol || currencyInfo.symbol;
@@ -525,7 +541,7 @@ function PlanTripContent() {
             </div>
 
             <button
-              onClick={handleSaveTrip}
+              onClick={handleSaveTripClick}
               disabled={isSaving}
               className="px-6 py-3 rounded-xl bg-teal-500 text-slate-950 font-bold text-sm hover:opacity-95 shadow-lg shadow-teal-500/20 flex items-center gap-2 self-start sm:self-auto disabled:opacity-50"
             >
@@ -737,6 +753,17 @@ function PlanTripContent() {
           <AffiliateDisclosure />
         </div>
       )}
+
+      {/* Contextual Auth Modal for Saving Itinerary */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        title="Sign in to save your itinerary"
+        description="Sign in or create an account to save this itinerary to your personal collection and sync across devices."
+        onSuccess={() => {
+          executeSaveTrip();
+        }}
+      />
     </div>
   );
 }

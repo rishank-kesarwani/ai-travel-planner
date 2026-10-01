@@ -10,12 +10,14 @@ export const api = axios.create({
   },
 });
 
-// Attach bearer token if stored in localStorage
+// Attach bearer token conditionally if valid token is stored in localStorage
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
-    if (token) {
+    if (token && token.trim() !== '' && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (config.headers && config.headers.Authorization) {
+      delete config.headers.Authorization;
     }
   }
   return config;
@@ -25,7 +27,7 @@ api.interceptors.request.use((config) => {
 export async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
   const refreshToken = localStorage.getItem('refreshToken');
-  if (!refreshToken) return null;
+  if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') return null;
 
   try {
     const res = await axios.post(
@@ -50,7 +52,7 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-// Handle automatic token refresh on 401
+// Handle automatic token refresh on 401 without disrupting public user navigation
 api.interceptors.response.use(
   (response) => {
     // Return extracted data if wrapped in standard ApiResponse envelope
@@ -64,6 +66,7 @@ api.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
+      originalRequest &&
       !originalRequest._retry &&
       !originalRequest.url?.includes('/auth/login') &&
       !originalRequest.url?.includes('/auth/refresh')
@@ -71,21 +74,20 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       const newAccessToken = await refreshAccessToken();
       if (newAccessToken) {
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       }
-
-      if (typeof window !== 'undefined') {
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-          window.location.href = '/login';
-        }
-      }
     }
 
+    const status = error.response?.status;
     const message =
       (error.response?.data as any)?.message ||
       error.message ||
       'An unexpected error occurred';
-    return Promise.reject(new Error(Array.isArray(message) ? message.join(', ') : message));
+    const formattedError: any = new Error(Array.isArray(message) ? message.join(', ') : message);
+    formattedError.status = status;
+    formattedError.response = error.response;
+    return Promise.reject(formattedError);
   },
 );

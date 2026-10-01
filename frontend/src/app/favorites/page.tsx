@@ -5,14 +5,17 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Heart, MapPin, Sparkles, Star, ArrowRight, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth-context';
 import { Favorite } from '../../types';
 
 export default function FavoritesPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: favorites, isLoading } = useQuery<Favorite[]>({
     queryKey: ['favorites'],
     queryFn: async () => api.get('/api/v1/favorites'),
+    enabled: Boolean(user),
   });
 
   const removeFavoriteMutation = useMutation({
@@ -23,6 +26,36 @@ export default function FavoritesPage() {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     },
   });
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 mx-auto flex items-center justify-center">
+          <Heart className="w-8 h-8 text-rose-400" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white">Sign In to View Favorites</h1>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Log in to manage and view all your saved destination bookmarks and easily plan trips.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/login"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-sm hover:opacity-95 shadow-lg shadow-teal-500/20"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="px-6 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold text-sm hover:bg-slate-800"
+          >
+            Create Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 py-4">

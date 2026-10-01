@@ -21,6 +21,7 @@ import {
   Luggage,
 } from 'lucide-react';
 import { api } from '../../../lib/api';
+import { useAuth } from '../../../lib/auth-context';
 import { Trip, WeatherData } from '../../../types';
 import { getCurrency, detectCurrencyFromDestination } from '../../../lib/currencies';
 import { AdBanner } from '../../../components/ads/AdBanner';
@@ -32,6 +33,7 @@ import { getBookingHotelLink, getGetYourGuideLink } from '../../../lib/affiliate
 export default function TripDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const tripId = params?.id as string;
   const [activeDayIndex, setActiveDayIndex] = useState(0);
@@ -40,7 +42,7 @@ export default function TripDetailPage() {
   const { data: trip, isLoading, error } = useQuery<Trip>({
     queryKey: ['trip', tripId],
     queryFn: async () => api.get(`/api/v1/trips/${tripId}`),
-    enabled: Boolean(tripId),
+    enabled: Boolean(user && tripId),
   });
 
   // Fetch Weather for Destination
@@ -70,6 +72,36 @@ export default function TripDetailPage() {
       router.push('/trips');
     },
   });
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-teal-500/20 border border-teal-500/30 mx-auto flex items-center justify-center">
+          <Luggage className="w-8 h-8 text-teal-400" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white">Sign In to View This Itinerary</h1>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            This saved travel itinerary is private to the account that created it. Please sign in to view it.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/login"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-sm hover:opacity-95 shadow-lg shadow-teal-500/20"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="px-6 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold text-sm hover:bg-slate-800"
+          >
+            Create Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -80,4 +80,22 @@ describe('AiWorkflowService', () => {
     expect(result.citations.length).toBeGreaterThan(0);
     expect(result.workflowStepsCompleted.length).toBe(8);
   });
+
+  it('should successfully generate itinerary for anonymous users without a userId', async () => {
+    const result = await workflowService.generateTripItinerary({
+      destination: 'Kyoto',
+      startDate: '2026-10-15',
+      endDate: '2026-10-20',
+      numberOfDays: 5,
+      budget: 1500,
+      currency: 'USD',
+    });
+
+    expect(result.destination).toBe('Kyoto');
+    expect(result.itinerary.length).toBe(5);
+    expect(result.aiGenerated).toBe(true);
+    expect(result.recommendedHotels.length).toBeGreaterThan(0);
+    expect(result.recommendedActivities.length).toBeGreaterThan(0);
+    expect(mockUsersService.findById).not.toHaveBeenCalledWith(undefined);
+  });
 });

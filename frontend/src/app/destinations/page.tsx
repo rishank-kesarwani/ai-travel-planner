@@ -15,6 +15,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import { useCurrency } from '../../lib/currency-context';
 import { Destination, Favorite } from '../../types';
+import { AuthModal } from '../../components/AuthModal';
 
 export default function DestinationsPage() {
   const { user } = useAuth();
@@ -24,6 +25,8 @@ export default function DestinationsPage() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [maxBudget, setMaxBudget] = useState(300);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingFavoriteId, setPendingFavoriteId] = useState<string | null>(null);
 
   // Fetch Destinations
   const { data: destinationsData, isLoading } = useQuery<{ items: Destination[]; total: number }>({
@@ -58,7 +61,22 @@ export default function DestinationsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     },
+    onError: (err: any, destId: string) => {
+      if (err?.status === 401 || err?.response?.status === 401) {
+        setPendingFavoriteId(destId);
+        setShowAuthModal(true);
+      }
+    },
   });
+
+  const handleFavoriteClick = (destId: string) => {
+    if (!user) {
+      setPendingFavoriteId(destId);
+      setShowAuthModal(true);
+      return;
+    }
+    toggleFavoriteMutation.mutate(destId);
+  };
 
   const categories = [
     { id: 'all', label: 'All Places' },
@@ -164,8 +182,10 @@ export default function DestinationsPage() {
                     </div>
 
                     <button
-                      onClick={() => toggleFavoriteMutation.mutate(dest._id)}
+                      onClick={() => handleFavoriteClick(dest._id)}
                       className="absolute top-3 right-3 p-2 rounded-full bg-slate-950/80 backdrop-blur-md text-white hover:text-rose-400 transition-colors border border-white/10"
+                      title={isFav ? 'Remove from favorites' : 'Save to favorites'}
+                      aria-label={isFav ? 'Remove from favorites' : 'Save to favorites'}
                     >
                       <Heart
                         className={`w-4 h-4 ${isFav ? 'text-rose-400 fill-rose-400' : 'text-slate-300'}`}
@@ -224,6 +244,23 @@ export default function DestinationsPage() {
           <p className="text-xs text-slate-400">Try broadening your search term or increasing the max budget.</p>
         </div>
       )}
+
+      {/* Contextual Auth Modal for Saving Favorites */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          setShowAuthModal(false);
+          setPendingFavoriteId(null);
+        }}
+        title="Sign in to save favorite destinations"
+        description="Sign in or create an account to save destinations to your personal favorites and plan trips easily."
+        onSuccess={() => {
+          if (pendingFavoriteId) {
+            toggleFavoriteMutation.mutate(pendingFavoriteId);
+            setPendingFavoriteId(null);
+          }
+        }}
+      />
     </div>
   );
 }

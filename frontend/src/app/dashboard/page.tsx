@@ -27,12 +27,14 @@ export default function DashboardPage() {
   const { data: tripsData } = useQuery<{ items: Trip[]; total: number }>({
     queryKey: ['trips', 'dashboard'],
     queryFn: async () => api.get('/api/v1/trips?limit=5'),
+    enabled: Boolean(user),
   });
 
   // Fetch Favorites
   const { data: favorites } = useQuery<Favorite[]>({
     queryKey: ['favorites'],
     queryFn: async () => api.get('/api/v1/favorites'),
+    enabled: Boolean(user),
   });
 
   // Fetch Featured Destinations for Recommendations
@@ -44,6 +46,36 @@ export default function DashboardPage() {
   const trips = tripsData?.items || [];
   const upcomingTrip = trips.find((t) => t.status === 'confirmed' || t.status === 'planning') || trips[0];
   const pastTrips = trips.filter((t) => t.status === 'completed');
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-teal-500/20 border border-teal-500/30 mx-auto flex items-center justify-center">
+          <Compass className="w-8 h-8 text-teal-400" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white">Sign In to Your Dashboard</h1>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Log in to view your trip metrics, active LangGraph drafts, and synced AI memory profile.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/login"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-sm hover:opacity-95 shadow-lg shadow-teal-500/20"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="px-6 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold text-sm hover:bg-slate-800"
+          >
+            Create Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 py-4">

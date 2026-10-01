@@ -8,9 +8,15 @@ import { User, UserPreferences } from '../types';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, preferences?: Partial<UserPreferences>) => Promise<void>;
-  logout: () => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string | false) => Promise<User>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    preferences?: Partial<UserPreferences>,
+    redirectTo?: string | false,
+  ) => Promise<User>;
+  logout: (redirectTo?: string) => Promise<void>;
   updatePreferences: (preferences: Partial<UserPreferences>) => Promise<void>;
 }
 
@@ -41,15 +47,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string,
+    redirectTo: string | false = '/dashboard',
+  ): Promise<User> => {
     const res: any = await api.post('/api/v1/auth/login', { email, password });
     if (res.accessToken) {
       localStorage.setItem('accessToken', res.accessToken);
       if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
       setUser(res.user);
       localStorage.setItem('user', JSON.stringify(res.user));
-      router.push('/dashboard');
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
+      return res.user;
     }
+    throw new Error('Authentication response missing access token');
   };
 
   const register = async (
@@ -57,7 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     preferences?: Partial<UserPreferences>,
-  ) => {
+    redirectTo: string | false = '/dashboard',
+  ): Promise<User> => {
     const res: any = await api.post('/api/v1/auth/register', {
       name,
       email,
@@ -69,11 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
       setUser(res.user);
       localStorage.setItem('user', JSON.stringify(res.user));
-      router.push('/dashboard');
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
+      return res.user;
     }
+    throw new Error('Registration response missing access token');
   };
 
-  const logout = async () => {
+  const logout = async (redirectTo = '/') => {
     try {
       await api.post('/api/v1/auth/logout');
     } catch {
@@ -83,7 +102,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       setUser(null);
-      router.push('/login');
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
     }
   };
 

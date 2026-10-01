@@ -13,10 +13,12 @@ import {
   Luggage,
 } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth-context';
 import { Trip } from '../../types';
 import { getCurrency, detectCurrencyFromDestination } from '../../lib/currencies';
 
 export default function TripsPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +31,7 @@ export default function TripsPage() {
       if (searchQuery) params.append('destination', searchQuery);
       return api.get(`/api/v1/trips?${params.toString()}`);
     },
+    enabled: Boolean(user),
   });
 
   const deleteMutation = useMutation({
@@ -41,6 +44,36 @@ export default function TripsPage() {
   });
 
   const trips = tripsData?.items || [];
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-teal-500/20 border border-teal-500/30 mx-auto flex items-center justify-center">
+          <Luggage className="w-8 h-8 text-teal-400" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white">Sign In to View Your Trips</h1>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Log in to manage and view all your saved AI itineraries, bookings, and upcoming travel plans.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/login"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold text-sm hover:opacity-95 shadow-lg shadow-teal-500/20"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="px-6 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold text-sm hover:bg-slate-800"
+          >
+            Create Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 py-4">

@@ -26,6 +26,7 @@ import { AdBanner } from '../../../components/ads/AdBanner';
 import { HotelRecommendations } from '../../../components/affiliates/HotelRecommendations';
 import { ActivityRecommendations } from '../../../components/affiliates/ActivityRecommendations';
 import { AffiliateDisclosure } from '../../../components/affiliates/AffiliateDisclosure';
+import { AuthModal } from '../../../components/AuthModal';
 
 export default function DestinationDetailPage() {
   const params = useParams();
@@ -37,6 +38,8 @@ export default function DestinationDetailPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authAction, setAuthAction] = useState<'favorite' | 'review'>('favorite');
 
   // Fetch Destination
   const { data: destination, isLoading } = useQuery<Destination>({
@@ -80,6 +83,24 @@ export default function DestinationDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     },
   });
+
+  const handleFavoriteClick = () => {
+    if (!user) {
+      setAuthAction('favorite');
+      setShowAuthModal(true);
+      return;
+    }
+    toggleFavoriteMutation.mutate();
+  };
+
+  const handleWriteReviewClick = () => {
+    if (!user) {
+      setAuthAction('review');
+      setShowAuthModal(true);
+      return;
+    }
+    setShowReviewModal(true);
+  };
 
   // Submit Review
   const submitReviewMutation = useMutation({
@@ -129,18 +150,18 @@ export default function DestinationDetailPage() {
 
           {/* Quick CTAs on Hero */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
-            {user && (
-              <button
-                onClick={() => toggleFavoriteMutation.mutate()}
-                className="p-3 rounded-full bg-slate-950/80 backdrop-blur-md text-white hover:text-rose-400 transition-colors border border-white/10"
-              >
-                <Heart
-                  className={`w-5 h-5 ${
-                    favoriteStatus?.isFavorite ? 'text-rose-400 fill-rose-400' : 'text-slate-300'
-                  }`}
-                />
-              </button>
-            )}
+            <button
+              onClick={handleFavoriteClick}
+              className="p-3 rounded-full bg-slate-950/80 backdrop-blur-md text-white hover:text-rose-400 transition-colors border border-white/10"
+              title={favoriteStatus?.isFavorite ? 'Remove from favorites' : 'Save to favorites'}
+              aria-label={favoriteStatus?.isFavorite ? 'Remove from favorites' : 'Save to favorites'}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  favoriteStatus?.isFavorite ? 'text-rose-400 fill-rose-400' : 'text-slate-300'
+                }`}
+              />
+            </button>
           </div>
 
           <div className="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -316,15 +337,13 @@ export default function DestinationDetailPage() {
             <p className="text-xs text-slate-400">Real feedback from community travelers</p>
           </div>
 
-          {user && (
-            <button
-              onClick={() => setShowReviewModal(true)}
-              className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-teal-300 hover:border-teal-400 text-xs font-bold transition-all flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Write Review</span>
-            </button>
-          )}
+          <button
+            onClick={handleWriteReviewClick}
+            className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-teal-300 hover:border-teal-400 text-xs font-bold transition-all flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Write Review</span>
+          </button>
         </div>
 
         {/* Review Form Modal / Inline */}
@@ -416,6 +435,29 @@ export default function DestinationDetailPage() {
 
       {/* Affiliate Partner Disclosure */}
       <AffiliateDisclosure />
+
+      {/* Contextual Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        title={
+          authAction === 'favorite'
+            ? 'Sign in to save favorite destinations'
+            : 'Sign in to share your review'
+        }
+        description={
+          authAction === 'favorite'
+            ? 'Sign in or create an account to bookmark destinations to your personal favorites.'
+            : 'Sign in or create an account to post your travel tips and rate this destination.'
+        }
+        onSuccess={() => {
+          if (authAction === 'favorite') {
+            toggleFavoriteMutation.mutate();
+          } else {
+            setShowReviewModal(true);
+          }
+        }}
+      />
     </div>
   );
 }

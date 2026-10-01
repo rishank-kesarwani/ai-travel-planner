@@ -9,9 +9,11 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { OptionalAuth } from '../../common/decorators/optional-auth.decorator';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiWorkflowService } from './ai-workflow.service';
 import { AiChatService } from './ai-chat.service';
@@ -117,15 +119,17 @@ export class AiController {
     private readonly aiClient: AiPlatformClient,
   ) {}
 
+  @OptionalAuth()
   @Post('trips/generate')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @ApiOperation({ summary: 'Generate intelligent trip plan via AI Platform LangGraph workflow' })
   async generateTrip(
-    @CurrentUser() user: AuthUser,
+    @CurrentUser() user: AuthUser | null,
     @Body() dto: GenerateTripPlanDto,
   ) {
     return this.aiWorkflowService.generateTripItinerary({
-      userId: user.userId,
+      userId: user?.userId,
       ...dto,
     });
   }

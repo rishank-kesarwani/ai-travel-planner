@@ -10,7 +10,7 @@ import {
 } from '../../common/constants/currencies.constant';
 
 export interface GenerateTripPlanInput {
-  userId: string;
+  userId?: string;
   destination: string;
   startDate: string;
   endDate: string;
@@ -48,7 +48,9 @@ export class AiWorkflowService {
     this.logger.log(`Initiating LangGraph Travel Planning Workflow for ${input.destination}...`);
 
     // Step 1 & 2: Load User Preferences and User Memory
-    const user = await this.usersService.findById(input.userId);
+    const user = input.userId
+      ? await this.usersService.findById(input.userId).catch(() => null)
+      : null;
     const userPrefs = {
       ...(user?.preferences || {}),
       ...(input.preferences || {}),
@@ -65,7 +67,7 @@ export class AiWorkflowService {
     // Step 3: Retrieve Travel Knowledge via RAG
     const ragResult = await this.aiClient.queryRag({
       applicationId: 'ai-travel-planner',
-      userId: input.userId,
+      userId: input.userId || 'anonymous',
       query: `Best attractions, local etiquette, travel tips and food for ${input.destination}`,
       limit: 4,
     });
@@ -107,7 +109,7 @@ export class AiWorkflowService {
         ragContext: ragResult.documents,
         destinationDetails,
       },
-      input.userId,
+      input.userId || 'anonymous',
     );
 
     if (remoteResult && remoteResult.itinerary) {
@@ -162,7 +164,7 @@ export class AiWorkflowService {
         snippet: `Verified accommodation, private transit routes, top attractions, and local dining pricing in ${currencyInfo.code} (${currencyInfo.symbol}) for ${destinationDetails.name || input.destination}.`,
       },
       {
-        title: `User Profile & Travel Memory Preferences`,
+        title: user ? `User Profile & Travel Memory Preferences` : `Travel Preferences & Constraints`,
         source: 'AI Platform Memory Store',
         snippet: `Personalized stay style (${userPrefs.accommodationPreference || 'boutique_hotel'}), transit preference, pacing (${userPrefs.walkingTolerance || 'moderate'}), and dietary style (${(userPrefs.foodPreferences || []).join(', ') || 'authentic cuisine'}) in ${currencyInfo.code}.`,
       },
