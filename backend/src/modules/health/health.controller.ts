@@ -7,7 +7,7 @@ import { AiPlatformClient } from '../ai-platform/ai-platform.client';
 import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Health')
-@Controller('api/v1/health')
+@Controller()
 export class HealthController {
   constructor(
     @InjectConnection() private readonly mongoConnection: Connection,
@@ -16,8 +16,20 @@ export class HealthController {
   ) {}
 
   @Public()
-  @Get()
-  @ApiOperation({ summary: 'System health check' })
+  @Get('health')
+  @ApiOperation({ summary: 'Lightweight process health and liveness check for Render' })
+  getLiveness() {
+    return {
+      status: 'ok',
+      service: 'ai-travel-planner-backend',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
+  }
+
+  @Public()
+  @Get('api/v1/health')
+  @ApiOperation({ summary: 'System detailed dependency health check' })
   async checkHealth() {
     const mongoState = this.mongoConnection.readyState === 1 ? 'connected' : 'disconnected';
     const redisState = this.redisService.getClient() ? 'connected' : 'in-memory-fallback';

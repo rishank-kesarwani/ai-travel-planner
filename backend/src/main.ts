@@ -14,8 +14,29 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('port', 4000);
-  const frontendUrl = configService.get<string>('frontendUrl', 'http://localhost:3000');
+  const port = Number(process.env.PORT) || configService.get<number>('port', 4000);
+
+  // Origins for CORS
+  const rawFrontendUrl =
+    configService.get<string>('frontendUrl') ||
+    process.env.FRONTEND_URL ||
+    'https://travel-planner.rishankkesarwani.com';
+
+  const configuredOrigins = rawFrontendUrl
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+  const defaultOrigins = [
+    'https://travel-planner.rishankkesarwani.com',
+    'https://travel.rishankkesarwani.com',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
+
+  const allowedOrigins = Array.from(
+    new Set([...configuredOrigins, ...defaultOrigins]),
+  );
 
   // Security & Middleware
   app.use(
@@ -28,7 +49,14 @@ async function bootstrap() {
 
   // CORS Configuration
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, or server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -81,9 +109,9 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
-  await app.listen(port);
-  logger.log(`🚀 Travel Planner Backend is running on: http://localhost:${port}`);
-  logger.log(`📚 Swagger Documentation is available at: http://localhost:${port}/api/docs`);
+  await app.listen(port, '0.0.0.0');
+  logger.log(`🚀 Travel Planner Backend is running on port ${port} (0.0.0.0)`);
+  logger.log(`📚 Swagger Documentation is available at http://0.0.0.0:${port}/api/docs`);
 }
 
 bootstrap();

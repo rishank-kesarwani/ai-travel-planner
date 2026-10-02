@@ -30,7 +30,11 @@ export class AuthService {
 
     const user = await this.usersService.setResetPasswordToken(email, tokenHash, expires);
     if (user) {
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+      const frontendUrl =
+        this.configService.get<string>('frontendUrl') ||
+        this.configService.get<string>('FRONTEND_URL') ||
+        process.env.FRONTEND_URL ||
+        'https://travel-planner.rishankkesarwani.com';
       const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
 
       this.notificationService

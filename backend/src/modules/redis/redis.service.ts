@@ -17,32 +17,48 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
+    const redisUrl =
+      this.configService.get<string>('redis.url') || process.env.REDIS_URL;
     const host = this.configService.get<string>('redis.host', 'localhost');
     const port = this.configService.get<number>('redis.port', 6379);
     const password = this.configService.get<string>('redis.password');
     const db = this.configService.get<number>('redis.db', 0);
 
+    const retryStrategy = (times: number) => {
+      if (times > 3) {
+        this.logger.warn(
+          'Redis connection failed after 3 attempts. Switching to in-memory fallback.',
+        );
+        return null;
+      }
+      return Math.min(times * 100, 1000);
+    };
+
     try {
-      this.client = new Redis({
-        host,
-        port,
-        password: password || undefined,
-        db,
-        maxRetriesPerRequest: 2,
-        retryStrategy: (times) => {
-          if (times > 3) {
-            this.logger.warn(
-              'Redis connection failed after 3 attempts. Switching to in-memory fallback.',
-            );
-            return null;
-          }
-          return Math.min(times * 100, 1000);
-        },
-      });
+      if (redisUrl) {
+        this.client = new Redis(redisUrl, {
+          maxRetriesPerRequest: 2,
+          retryStrategy,
+          lazyConnect: false,
+        });
+      } else {
+        this.client = new Redis({
+          host,
+          port,
+          password: password || undefined,
+          db,
+          maxRetriesPerRequest: 2,
+          retryStrategy,
+        });
+      }
 
       this.client.on('connect', () => {
         this.isConnected = true;
-        this.logger.log(`Connected to Redis at ${host}:${port}`);
+        this.logger.log(
+          redisUrl
+            ? `Connected to Redis via connection URL`
+            : `Connected to Redis at ${host}:${port}`,
+        );
       });
 
       this.client.on('error', (err) => {
@@ -51,7 +67,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
           `Redis error (${err.message}). Using in-memory fallback cache.`,
         );
       });
-    } catch (err) {
+    } catch (err: any) {
       this.logger.warn(
         `Failed to initialize Redis client. Using in-memory fallback: ${err.message}`,
       );

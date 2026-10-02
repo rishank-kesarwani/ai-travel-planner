@@ -10,6 +10,7 @@ export interface EnvironmentVariables {
   JWT_REFRESH_EXPIRATION: string;
   SERVICE_API_KEY: string;
   MONGODB_URI: string;
+  REDIS_URL?: string;
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD?: string;
@@ -38,6 +39,7 @@ export default () => ({
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-travel-planner',
   },
   redis: {
+    url: process.env.REDIS_URL || undefined,
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD || undefined,

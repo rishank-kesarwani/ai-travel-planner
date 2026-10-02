@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NotificationClientService } from './notification-client.service';
 import { IngestNotificationPayload } from './interfaces/notification.interface';
 
@@ -6,12 +7,24 @@ import { IngestNotificationPayload } from './interfaces/notification.interface';
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
-  constructor(private readonly client: NotificationClientService) {}
+  constructor(
+    private readonly client: NotificationClientService,
+    @Optional() private readonly configService?: ConfigService,
+  ) {}
+
+  private getFrontendUrl(): string {
+    return (
+      this.configService?.get<string>('frontendUrl') ||
+      process.env.FRONTEND_URL ||
+      'https://travel-planner.rishankkesarwani.com'
+    );
+  }
 
   /**
    * 1. Send Welcome Email & Push Notification when a new traveler registers
    */
   async sendWelcomeNotification(user: { id: string; email: string; name: string }): Promise<void> {
+    const frontendUrl = this.getFrontendUrl();
     const payload: IngestNotificationPayload = {
       idempotencyKey: `welcome_${user.id}_${Date.now()}`,
       priority: 'CRITICAL',
@@ -36,7 +49,7 @@ export class NotificationService {
               </p>
             </div>
             <div style="text-align: center;">
-              <a href="http://localhost:3000/plan-trip" style="display: inline-block; background: linear-gradient(135deg, #14b8a6, #06b6d4); color: #020617; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-size: 14px;">
+              <a href="${frontendUrl}/plan-trip" style="display: inline-block; background: linear-gradient(135deg, #14b8a6, #06b6d4); color: #020617; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-size: 14px;">
                 Plan Your First AI Trip 🚀
               </a>
             </div>
@@ -80,6 +93,7 @@ export class NotificationService {
       .join('');
 
     const tripCurrency = trip.currency || 'INR';
+    const frontendUrl = this.getFrontendUrl();
 
     const payload: IngestNotificationPayload = {
       idempotencyKey: `trip_created_${trip._id}`,
@@ -108,7 +122,7 @@ export class NotificationService {
             </div>
 
             <div style="text-align: center; margin-top: 24px;">
-              <a href="http://localhost:3000/trips/${trip._id}" style="display: inline-block; background: #2dd4bf; color: #020617; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+              <a href="${frontendUrl}/trips/${trip._id}" style="display: inline-block; background: #2dd4bf; color: #020617; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
                 Open Interactive Timeline
               </a>
             </div>
@@ -137,6 +151,7 @@ export class NotificationService {
     trip: { _id: string; destination: string },
     newStatus: string,
   ): Promise<void> {
+    const frontendUrl = this.getFrontendUrl();
     const payload: IngestNotificationPayload = {
       idempotencyKey: `trip_status_${trip._id}_${newStatus}_${Date.now()}`,
       priority: 'CRITICAL',
@@ -152,7 +167,7 @@ export class NotificationService {
           <div style="font-family: sans-serif; background-color: #0f172a; color: #fff; padding: 24px; border-radius: 12px;">
             <h2 style="color: #2dd4bf;">Trip Status Update</h2>
             <p>Your journey to <strong>${trip.destination}</strong> has been updated to <strong>${newStatus.toUpperCase()}</strong>.</p>
-            <p><a href="http://localhost:3000/trips/${trip._id}" style="color: #2dd4bf;">View Trip Details</a></p>
+            <p><a href="${frontendUrl}/trips/${trip._id}" style="color: #2dd4bf;">View Trip Details</a></p>
           </div>
         `,
       },
