@@ -16,6 +16,20 @@ export class HealthController {
   ) {}
 
   @Public()
+  @Get()
+  @ApiOperation({ summary: 'API Root & Status Information' })
+  getRoot() {
+    return {
+      name: 'AI Travel Planner Backend API',
+      status: 'online',
+      version: '1.0.0',
+      docs: '/api/docs',
+      health: '/health',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Public()
   @Get('health')
   @ApiOperation({ summary: 'Lightweight process health and liveness check for Render' })
   getLiveness() {
